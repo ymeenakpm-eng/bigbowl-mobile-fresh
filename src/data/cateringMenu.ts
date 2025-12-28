@@ -1,0 +1,598 @@
+
+export type VegType = 'veg' | 'non-veg';
+
+export type CateringMealType = 'breakfast' | 'lunch' | 'dinner';
+
+export type CateringCourse =
+  | 'starter'
+  | 'biryani_pulav'
+  | 'rice'
+  | 'curry'
+  | 'hot_snack'
+  | 'bread';
+
+export interface CateringItem {
+  id: string;
+  name: string;
+  vegType: VegType;
+  course: CateringCourse;
+  mealType: CateringMealType;
+  description: string;
+  image: string; // remote URL for now
+}
+
+// Generic placeholder images per course/veg type.
+const IMG_STARTER_VEG =
+  'https://images.unsplash.com/photo-1604908176997-1251884b08a8?auto=format&fit=crop&w=800&q=80';
+const IMG_STARTER_NONVEG =
+  'https://images.unsplash.com/photo-1543353071-873f17a7a088?auto=format&fit=crop&w=800&q=80';
+const IMG_BIRYANI_VEG =
+  'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=800&q=80';
+const IMG_BIRYANI_NONVEG =
+  'https://images.unsplash.com/photo-1604908176999-1017c96c5c38?auto=format&fit=crop&w=800&q=80';
+const IMG_RICE =
+  'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+const IMG_CURRY_VEG =
+  'https://images.unsplash.com/photo-1604908554168-7a139e401b88?auto=format&fit=crop&w=800&q=80';
+const IMG_CURRY_NONVEG =
+  'https://images.unsplash.com/photo-1631455052486-1c9819a030dc?auto=format&fit=crop&w=800&q=80';
+const IMG_HOT_SNACK =
+  'https://images.unsplash.com/photo-1604909052743-94e838986d0c?auto=format&fit=crop&w=800&q=80';
+const IMG_BREAD =
+  'https://images.unsplash.com/photo-1533777324565-a040eb52fac1?auto=format&fit=crop&w=800&q=80';
+
+export const cateringItems: CateringItem[] = [
+  // --- Starters (Veg) ---
+  {
+    id: 'starter-crispy-corn',
+    name: 'Crispy Corn',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy fried corn tossed with spices.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-veg-manchurian',
+    name: 'Veg Manchurian',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Indo-Chinese veg Manchurian balls in spicy sauce.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-gobi-manchurian',
+    name: 'Gobi Manchurian',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Cauliflower florets fried and tossed in Manchurian sauce.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-gobi-pakoda',
+    name: 'Gobi Pakoda',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy cauliflower fritters.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-cheese-nuggets',
+    name: 'Cheese Nuggets',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Golden fried cheese nuggets.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-hara-bhara-kebab',
+    name: 'Hara Bhara Kebab',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Spinach and peas kebabs, shallow fried.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-veg-spring-rolls',
+    name: 'Veg Spring Rolls',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy spring rolls stuffed with veggies.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-baby-corn-pakoda',
+    name: 'Baby Corn Pakoda',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Spiced baby corn fritters.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-baby-corn-manchurian',
+    name: 'Baby Corn Manchurian',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Baby corn tossed in Manchurian sauce.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-mushroom-pakoda',
+    name: 'Mushroom Pakoda',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy mushroom fritters.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-chilli-garlic-mushroom',
+    name: 'Chilli Garlic Mushroom',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Mushrooms tossed in chilli garlic sauce.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-paneer-65',
+    name: 'Paneer 65',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Spicy fried paneer bites.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-paneer-tikka',
+    name: 'Paneer Tikka',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Marinated paneer grilled in tandoori style.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-hariyali-paneer-tikka',
+    name: 'Hariyali Paneer Tikka',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Green marinated paneer tikka.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-malai-paneer-tikka',
+    name: 'Malai Paneer Tikka',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Creamy malai paneer tikka.',
+    image: IMG_STARTER_VEG,
+  },
+  {
+    id: 'starter-malai-broccoli',
+    name: 'Malai Broccoli',
+    vegType: 'veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Broccoli florets in creamy marinade.',
+    image: IMG_STARTER_VEG,
+  },
+
+  // --- Starters (Non-Veg) ---
+  {
+    id: 'starter-boiled-egg',
+    name: 'Boiled Egg',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Simple seasoned boiled eggs.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-egg-pepper-fry',
+    name: 'Egg Pepper Fry',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Egg halves tossed with pepper masala.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-egg-manchurian',
+    name: 'Egg Manchurian',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Egg pieces in Manchurian sauce.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chilli-egg',
+    name: 'Chilli Egg',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Egg tossed in spicy chilli sauce.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-egg-pakoda',
+    name: 'Egg Pakoda',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy egg fritters.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chicken-hariyali-tikka',
+    name: 'Chicken Hariyali Tikka',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Green marinated chicken tikka.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-andhra-kodi-vepudu',
+    name: 'Andhra Kodi Vepudu',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Spicy Andhra style chicken fry.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-pachi-mirchi-kodi-kebab',
+    name: 'Pachi Mirchi Kodi Kebab',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Green chilli chicken kebab.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chicken-manchurian',
+    name: 'Chicken Manchurian',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Classic chicken Manchurian.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chicken-65',
+    name: 'Chicken 65',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'South Indian style fried chicken.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chicken-tikka',
+    name: 'Chicken Tikka',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Tandoori chicken tikka skewers.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-kaju-chicken-kebab',
+    name: 'Kaju Chicken Kebab',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Cashew-rich chicken kebabs.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chicken-lollipop',
+    name: 'Chicken Lollypop',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Crispy chicken lollipops.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chilli-apollo-fish',
+    name: 'Chilli Apollo Fish',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Spicy fried fish starter.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-chilli-prawns',
+    name: 'Chilli Prawns',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Prawns tossed in chilli sauce.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-mutton-sheek-kebab',
+    name: 'Mutton Sheek Kebab',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Minced mutton seekh kebabs.',
+    image: IMG_STARTER_NONVEG,
+  },
+  {
+    id: 'starter-mutton-ghee-roast',
+    name: 'Mutton Ghee Roast',
+    vegType: 'non-veg',
+    course: 'starter',
+    mealType: 'lunch',
+    description: 'Rich coastal style mutton ghee roast.',
+    image: IMG_STARTER_NONVEG,
+  },
+
+  // --- Biryani / Pulav ---
+  {
+    id: 'biryani-veg-pulav',
+    name: 'Veg Pulav',
+    vegType: 'veg',
+    course: 'biryani_pulav',
+    mealType: 'lunch',
+    description: 'Fragrant vegetable pulav.',
+    image: IMG_BIRYANI_VEG,
+  },
+  {
+    id: 'biryani-veg-biryani',
+    name: 'Veg Biryani',
+    vegType: 'veg',
+    course: 'biryani_pulav',
+    mealType: 'lunch',
+    description: 'Classic veg biryani with spices.',
+    image: IMG_BIRYANI_VEG,
+  },
+  {
+    id: 'biryani-paneer-biryani',
+    name: 'Paneer Biryani',
+    vegType: 'veg',
+    course: 'biryani_pulav',
+    mealType: 'lunch',
+    description: 'Biryani layered with paneer cubes.',
+    image: IMG_BIRYANI_VEG,
+  },
+  {
+    id: 'biryani-chicken-biryani',
+    name: 'Chicken Biryani',
+    vegType: 'non-veg',
+    course: 'biryani_pulav',
+    mealType: 'lunch',
+    description: 'Hyderabadi style chicken biryani.',
+    image: IMG_BIRYANI_NONVEG,
+  },
+  {
+    id: 'biryani-mutton-biryani',
+    name: 'Mutton Biryani',
+    vegType: 'non-veg',
+    course: 'biryani_pulav',
+    mealType: 'lunch',
+    description: 'Slow cooked mutton biryani.',
+    image: IMG_BIRYANI_NONVEG,
+  },
+
+  // --- Flavoured Rice ---
+  {
+    id: 'rice-pappu-charu-annam',
+    name: 'Pappu Charu Annam',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'Rice served with dal rasam.',
+    image: IMG_RICE,
+  },
+  {
+    id: 'rice-mint-rice',
+    name: 'Mint Rice',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'Refreshing pudina flavoured rice.',
+    image: IMG_RICE,
+  },
+  {
+    id: 'rice-curd-rice',
+    name: 'Curd Rice',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'South Indian style daddojanam.',
+    image: IMG_RICE,
+  },
+  {
+    id: 'rice-tamarind-rice',
+    name: 'Tamarind Rice',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'Pulihora with tangy tamarind.',
+    image: IMG_RICE,
+  },
+  {
+    id: 'rice-bagara-rice',
+    name: 'Bagara Rice',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'Mild spiced bagara rice.',
+    image: IMG_RICE,
+  },
+  {
+    id: 'rice-veg-fried-rice',
+    name: 'Veg Fried Rice',
+    vegType: 'veg',
+    course: 'rice',
+    mealType: 'lunch',
+    description: 'Indo-Chinese veg fried rice.',
+    image: IMG_RICE,
+  },
+
+  // --- Biryani / Pulav Curries ---
+  {
+    id: 'curry-veg-kurma',
+    name: 'Veg Kurma',
+    vegType: 'veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Mixed vegetable kurma.',
+    image: IMG_CURRY_VEG,
+  },
+  {
+    id: 'curry-dal-makhni',
+    name: 'Dal Makhni',
+    vegType: 'veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Rich black dal with cream and butter.',
+    image: IMG_CURRY_VEG,
+  },
+  {
+    id: 'curry-mushroom-masala',
+    name: 'Mushroom Masala',
+    vegType: 'veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Button mushrooms in onion-tomato gravy.',
+    image: IMG_CURRY_VEG,
+  },
+  {
+    id: 'curry-paneer-butter-masala',
+    name: 'Paneer Butter Masala',
+    vegType: 'veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Creamy paneer curry in tomato gravy.',
+    image: IMG_CURRY_VEG,
+  },
+  {
+    id: 'curry-egg-masala',
+    name: 'Egg Masala Curry',
+    vegType: 'non-veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Boiled eggs in spicy masala gravy.',
+    image: IMG_CURRY_NONVEG,
+  },
+  {
+    id: 'curry-chicken-chettinad',
+    name: 'Chicken Chettinad',
+    vegType: 'non-veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Chettinad style spicy chicken curry.',
+    image: IMG_CURRY_NONVEG,
+  },
+  {
+    id: 'curry-andhra-chicken-curry',
+    name: 'Andhra Chicken Curry',
+    vegType: 'non-veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Traditional Andhra style chicken curry.',
+    image: IMG_CURRY_NONVEG,
+  },
+  {
+    id: 'curry-telangana-mutton-curry',
+    name: 'Telangana Mutton Curry',
+    vegType: 'non-veg',
+    course: 'curry',
+    mealType: 'lunch',
+    description: 'Spicy Telangana mutton curry.',
+    image: IMG_CURRY_NONVEG,
+  },
+
+  // --- Hot snacks (typically for breakfast / snacks) ---
+  {
+    id: 'hot-cut-mirchi',
+    name: 'Cut Mirchi',
+    vegType: 'veg',
+    course: 'hot_snack',
+    mealType: 'breakfast',
+    description: 'Cut chilli bajjis fried crisp.',
+    image: IMG_HOT_SNACK,
+  },
+  {
+    id: 'hot-masala-vada',
+    name: 'Masala Vada',
+    vegType: 'veg',
+    course: 'hot_snack',
+    mealType: 'breakfast',
+    description: 'Crispy chana dal vada.',
+    image: IMG_HOT_SNACK,
+  },
+  {
+    id: 'hot-medu-vada',
+    name: 'Medu Vada',
+    vegType: 'veg',
+    course: 'hot_snack',
+    mealType: 'breakfast',
+    description: 'South Indian urad dal vada.',
+    image: IMG_HOT_SNACK,
+  },
+  {
+    id: 'hot-mirchi-bajji',
+    name: 'Mirchi Bajji',
+    vegType: 'veg',
+    course: 'hot_snack',
+    mealType: 'breakfast',
+    description: 'Stuffed green chilli fritters.',
+    image: IMG_HOT_SNACK,
+  },
+  {
+    id: 'hot-raw-banana-bajji',
+    name: 'Raw Banana Bajji',
+    vegType: 'veg',
+    course: 'hot_snack',
+    mealType: 'breakfast',
+    description: 'Plantain slices dipped in batter and fried.',
+    image: IMG_HOT_SNACK,
+  },
+
+  // --- Breads ---
+  {
+    id: 'bread-phulka',
+    name: 'Phulka',
+    vegType: 'veg',
+    course: 'bread',
+    mealType: 'lunch',
+    description: 'Soft phulka rotis.',
+    image: IMG_BREAD,
+  },
+  {
+    id: 'bread-rumali-roti',
+    name: 'Rumali Roti',
+    vegType: 'veg',
+    course: 'bread',
+    mealType: 'lunch',
+    description: 'Thin, soft rumali rotis.',
+    image: IMG_BREAD,
+  },
+  {
+    id: 'bread-butter-naan',
+    name: 'Butter Naan',
+    vegType: 'veg',
+    course: 'bread',
+    mealType: 'lunch',
+    description: 'Tandoor baked naan with butter.',
+    image: IMG_BREAD,
+  },
+];

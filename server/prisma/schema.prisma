@@ -1,0 +1,173 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  CUSTOMER
+  VENDOR
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  PREPPING
+  ONSITE
+  COMPLETED
+  CANCELLED
+  REFUND_PENDING
+}
+
+enum BowlOrderStatus {
+  PAYMENT_PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  role      Role     @default(CUSTOMER)
+  name      String?
+  email     String?
+  createdAt DateTime @default(now())
+  quotes    Quote[]
+  bookings  Booking[]
+  addresses Address[]
+  bowlOrders BowlOrder[]
+}
+
+model Package {
+  id        String   @id @default(cuid())
+  title     String
+  cuisine   String
+  minPax    Int
+  basePrice Int
+  perPax    Int
+  isVeg     Boolean
+  images    String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  quotes    Quote[]
+}
+
+model Quote {
+  id         String   @id @default(cuid())
+  userId     String?
+  packageId  String
+  eventDate  DateTime
+  pax        Int
+  city       String
+  distanceKm Int      @default(0)
+  subtotal   Int
+  gst        Int
+  total      Int
+  breakdown  Json
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+
+  user    User?    @relation(fields: [userId], references: [id])
+  package Package  @relation(fields: [packageId], references: [id])
+  booking Booking?
+}
+
+model Booking {
+  id              String        @id @default(cuid())
+  userId          String
+  quoteId         String        @unique
+  status          BookingStatus @default(PENDING)
+  advancePct      Int           @default(30)
+  advanceAmount   Int
+  advancePaid     Boolean       @default(false)
+  razorpayOrderId String?
+  razorpayPaymentId String?
+  createdAt       DateTime      @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  quote Quote @relation(fields: [quoteId], references: [id])
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  label     String
+  line1     String
+  line2     String?
+  city      String
+  state     String?
+  pincode   String?
+  landmark  String?
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+  bowlOrders BowlOrder[]
+}
+
+model Bowl {
+  id           String   @id @default(cuid())
+  title        String
+  pricePerUnit Int
+  minQty       Int
+  isVeg        Boolean
+  images       String[]
+  inclusions   String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  orders BowlOrder[]
+}
+
+model BowlAddOn {
+  id           String   @id @default(cuid())
+  title        String
+  pricePerUnit Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  orderLinks BowlOrderAddOn[]
+}
+
+model BowlOrder {
+  id               String         @id @default(cuid())
+  userId           String
+  bowlId           String
+  addressId        String
+  qty              Int
+  deliveryDate     DateTime
+  timeSlot         String
+  status           BowlOrderStatus @default(PAYMENT_PENDING)
+  deliveryFee      Int
+  subtotal         Int
+  total            Int
+  razorpayOrderId  String?
+  razorpayPaymentId String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  bowl    Bowl    @relation(fields: [bowlId], references: [id])
+  address Address @relation(fields: [addressId], references: [id])
+  addons  BowlOrderAddOn[]
+}
+
+model BowlOrderAddOn {
+  id        String   @id @default(cuid())
+  orderId   String
+  addOnId   String
+  unitPrice Int
+
+  order BowlOrder @relation(fields: [orderId], references: [id])
+  addOn BowlAddOn @relation(fields: [addOnId], references: [id])
+
+  @@unique([orderId, addOnId])
+}
