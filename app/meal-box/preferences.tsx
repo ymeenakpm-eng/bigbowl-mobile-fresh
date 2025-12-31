@@ -8,7 +8,7 @@ type Budget = '99-149' | '150-199' | '200+';
 
 type Spice = 'mild' | 'medium' | 'spicy';
 
-type Params = { type?: string };
+type Params = { type?: string; date?: string; eventDate?: string; time?: string };
 
 const Chip = ({
   label,
@@ -51,7 +51,7 @@ export default function MealBoxPreferencesScreen() {
   }, [params.type]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -65,7 +65,7 @@ export default function MealBoxPreferencesScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Veg / Non-veg</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {([
@@ -103,7 +103,11 @@ export default function MealBoxPreferencesScreen() {
             router.push(
               `/meal-box/listing?type=${encodeURIComponent(String(params.type ?? ''))}&pref=${encodeURIComponent(
                 pref,
-              )}&budget=${encodeURIComponent(budget)}&spice=${encodeURIComponent(spice)}` as any,
+              )}&budget=${encodeURIComponent(budget)}&spice=${encodeURIComponent(
+                spice,
+              )}&date=${encodeURIComponent(String(params.date ?? ''))}&eventDate=${encodeURIComponent(
+                String(params.eventDate ?? ''),
+              )}&time=${encodeURIComponent(String(params.time ?? ''))}` as any,
             );
           }}
           activeOpacity={0.9}

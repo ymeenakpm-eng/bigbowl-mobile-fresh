@@ -42,7 +42,7 @@ export default function SnackBoxOccasionScreen() {
   const canContinue = useMemo(() => Boolean(occasion), [occasion]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -53,7 +53,7 @@ export default function SnackBoxOccasionScreen() {
         <Text style={{ fontSize: 20, fontWeight: '700' }}>Snack Occasion</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Choose occasion</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {(['Evening Snacks', 'Office Meeting', 'Kids Party', 'Tea-time Combo'] as Occasion[]).map((o) => (

@@ -116,7 +116,7 @@ export default function RazorpayWebViewScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       {verifying ? (
         <View style={{ paddingHorizontal: 16, paddingBottom: 12 }}>
           <ActivityIndicator />

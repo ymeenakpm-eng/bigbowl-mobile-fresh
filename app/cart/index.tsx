@@ -11,7 +11,7 @@ export default function CartScreen() {
   const total = getCartTotal();
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       {/* Header */}
       <View
         style={{
@@ -67,7 +67,7 @@ export default function CartScreen() {
         <>
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}
           >
             {items.map((item) => (
               <View

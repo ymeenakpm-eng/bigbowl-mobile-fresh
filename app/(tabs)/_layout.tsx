@@ -26,10 +26,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="explore"
         options={{
-          title: 'Packages',
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="square.grid.2x2.fill" color={color} />
-          ),
+          href: null,
         }}
       />
       <Tabs.Screen
@@ -40,10 +37,16 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="refer"
+        options={{
+          title: 'Refer',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="account"
         options={{
-          title: 'Account',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          href: null,
         }}
       />
     </Tabs>

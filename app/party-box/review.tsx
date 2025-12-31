@@ -117,7 +117,7 @@ export default function PartyBoxReviewScreen() {
   }, [params.guests]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -128,7 +128,7 @@ export default function PartyBoxReviewScreen() {
         <Text style={{ fontSize: 20, fontWeight: '700' }}>Review & Cart</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <View style={{ borderRadius: 16, padding: 14, backgroundColor: '#F8FAFC', marginBottom: 12 }}>
           <Text style={{ fontSize: 16, fontWeight: '800', marginBottom: 6 }}>{title}</Text>
           <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 2 }}>

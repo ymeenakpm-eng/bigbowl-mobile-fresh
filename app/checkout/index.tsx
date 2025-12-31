@@ -53,7 +53,7 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: '800', marginBottom: 8 }}>
           Checkout

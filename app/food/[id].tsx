@@ -28,8 +28,7 @@ export default function FoodDetail() {
   const isBoxCategory =
     item.category === 'Party Boxes' ||
     item.category === 'Meal Boxes' ||
-    item.category === 'Snack Boxes' ||
-    item.category === 'Bowls';
+    item.category === 'Snack Boxes';
 
   let servesLine: string | undefined;
   if (item.category === 'Party Boxes') {
@@ -38,8 +37,6 @@ export default function FoodDetail() {
     servesLine = 'Packed meal boxes for teams & daily meals';
   } else if (item.category === 'Snack Boxes') {
     servesLine = 'Perfect for evening snacks & starters';
-  } else if (item.category === 'Bowls') {
-    servesLine = 'Single-serve comfort bowls';
   }
 
   return (
@@ -62,8 +59,6 @@ export default function FoodDetail() {
                 ? '#0EA5E9'
                 : item.category === 'Snack Boxes'
                 ? '#F97316'
-                : item.category === 'Bowls'
-                ? '#22C55E'
                 : '#E5E7EB',
           }}
         >
@@ -74,8 +69,7 @@ export default function FoodDetail() {
               color:
                 item.category === 'Party Boxes' ||
                 item.category === 'Meal Boxes' ||
-                item.category === 'Snack Boxes' ||
-                item.category === 'Bowls'
+                item.category === 'Snack Boxes'
                   ? '#FFFFFF'
                   : '#111827',
             }}

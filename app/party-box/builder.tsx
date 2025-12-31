@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import { mapItemToImage } from '../../src/utils/mapItemToImage';
 
@@ -128,7 +128,10 @@ export default function PartyBoxBuilderScreen() {
         const it = menu.find((m) => m.id === selId);
         return it?.section === item.section ? acc + 1 : acc;
       }, 0);
-      if (max > 0 && current >= max) return prev;
+      if (max > 0 && current >= max) {
+        Alert.alert('Limit reached', 'Already allowed no. of items selected. Please deselect if needed.');
+        return prev;
+      }
       return [...prev, id];
     });
   };
@@ -149,7 +152,7 @@ export default function PartyBoxBuilderScreen() {
   }, [menu, pref]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -165,7 +168,7 @@ export default function PartyBoxBuilderScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         {loading ? <Text style={{ color: '#6B7280' }}>Loading menu...</Text> : null}
         {grouped.map(({ section, items }) => (
           <View key={section}>

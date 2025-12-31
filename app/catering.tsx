@@ -1,8 +1,9 @@
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CateringItem, cateringItems, CateringMealType } from '../src/data/cateringMenu';
 import { mapItemToImage } from '../src/utils/mapItemToImage';
@@ -53,6 +54,7 @@ const BREAKFAST_ACCOMPANIMENTS = [
 
 type SelectedCateringItem = {
   item: CateringItem;
+  count: number;
   accompaniments?: string[];
 };
 
@@ -119,13 +121,53 @@ const Chip = ({
 
 export default function CateringScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ preset?: string }>();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<number>(0);
   const [state, setState] = useState<StepState>({});
   const [specificDate, setSpecificDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<SelectedCateringItem[]>([]);
+  const [selectedItemsById, setSelectedItemsById] = useState<Record<string, SelectedCateringItem>>({});
   const [accompanimentsItem, setAccompanimentsItem] = useState<CateringItem | null>(null);
   const [tempAccompaniments, setTempAccompaniments] = useState<string[]>([]);
+
+  React.useEffect(() => {
+    const raw = String(params.preset ?? '').trim();
+    if (!raw) return;
+    try {
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return;
+
+      const nextStep = Number((parsed as any)?.step);
+      const nextState = (parsed as any)?.state;
+      const nextSpecificDate = String((parsed as any)?.specificDateISO ?? '').trim();
+      const selected = (parsed as any)?.selected;
+
+      if (Number.isFinite(nextStep) && nextStep >= 0 && nextStep <= 4) setStep(nextStep);
+      if (nextState && typeof nextState === 'object') setState(nextState as StepState);
+      if (nextSpecificDate) {
+        const d = new Date(nextSpecificDate);
+        if (!Number.isNaN(d.getTime())) setSpecificDate(d);
+      }
+
+      if (selected && typeof selected === 'object') {
+        const next: Record<string, SelectedCateringItem> = {};
+        for (const [id, v] of Object.entries(selected)) {
+          const it = cateringItems.find((x) => x.id === id);
+          if (!it) continue;
+          const count = Math.max(0, Math.round(Number((v as any)?.count ?? 0)));
+          if (count <= 0) continue;
+          const accompaniments = Array.isArray((v as any)?.accompaniments)
+            ? ((v as any).accompaniments as any[]).map((x) => String(x)).filter(Boolean)
+            : undefined;
+          next[id] = { item: it, count, accompaniments };
+        }
+        setSelectedItemsById(next);
+      }
+    } catch {
+      // ignore
+    }
+  }, [params.preset]);
 
   const effectiveMealType: CateringMealType | undefined = useMemo(() => {
     if (state.mealType === 'snacks') return 'lunch'; // map snacks to lunch menu for now
@@ -167,16 +209,36 @@ export default function CateringScreen() {
       return;
     }
 
-    setSelectedItems((prev) => [...prev, { item }]);
+    setSelectedItemsById((prev) => {
+      const cur = prev[item.id];
+      const nextCount = (cur?.count ?? 0) + 1;
+      return { ...prev, [item.id]: { item, count: nextCount, accompaniments: cur?.accompaniments } };
+    });
+  };
+
+  const handleRemoveItem = (item: CateringItem) => {
+    setSelectedItemsById((prev) => {
+      const cur = prev[item.id];
+      const nextCount = Math.max(0, (cur?.count ?? 0) - 1);
+      if (nextCount <= 0) {
+        const copy = { ...prev };
+        delete copy[item.id];
+        return copy;
+      }
+      return { ...prev, [item.id]: { item, count: nextCount, accompaniments: cur?.accompaniments } };
+    });
   };
 
   const handleConfirmAccompaniments = () => {
     if (!accompanimentsItem) return;
 
-    setSelectedItems((prev) => [
-      ...prev,
-      { item: accompanimentsItem, accompaniments: tempAccompaniments },
-    ]);
+    const item = accompanimentsItem;
+    const acc = tempAccompaniments;
+    setSelectedItemsById((prev) => {
+      const cur = prev[item.id];
+      const nextCount = (cur?.count ?? 0) + 1;
+      return { ...prev, [item.id]: { item, count: nextCount, accompaniments: acc } };
+    });
     setAccompanimentsItem(null);
     setTempAccompaniments([]);
   };
@@ -408,27 +470,47 @@ export default function CateringScreen() {
                         <Text style={{ fontSize: 11, color: '#6B7280' }} numberOfLines={2}>
                           {item.description}
                         </Text>
-                        <TouchableOpacity
-                          onPress={() => handleAddItem(item)}
-                          style={{
-                            marginTop: 6,
-                            alignSelf: 'flex-start',
-                            paddingHorizontal: 10,
-                            paddingVertical: 4,
-                            borderRadius: 999,
-                            backgroundColor: '#4C1D95',
-                          }}
-                        >
-                          <Text
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+                          {Number(selectedItemsById[item.id]?.count ?? 0) > 0 ? (
+                            <TouchableOpacity
+                              onPress={() => handleRemoveItem(item)}
+                              style={{
+                                marginRight: 10,
+                                alignSelf: 'flex-start',
+                                paddingHorizontal: 10,
+                                paddingVertical: 4,
+                                borderRadius: 999,
+                                borderWidth: 1,
+                                borderColor: '#E5E7EB',
+                                backgroundColor: '#FFFFFF',
+                              }}
+                            >
+                              <Text style={{ color: '#111827', fontSize: 11, fontWeight: '700' }}>Remove</Text>
+                            </TouchableOpacity>
+                          ) : null}
+                          <TouchableOpacity
+                            onPress={() => handleAddItem(item)}
                             style={{
-                              color: '#FFFFFF',
-                              fontSize: 11,
-                              fontWeight: '600',
+                              alignSelf: 'flex-start',
+                              paddingHorizontal: 10,
+                              paddingVertical: 4,
+                              borderRadius: 999,
+                              backgroundColor: '#4C1D95',
                             }}
                           >
-                            Add
-                          </Text>
-                        </TouchableOpacity>
+                            <Text
+                              style={{
+                                color: '#FFFFFF',
+                                fontSize: 11,
+                                fontWeight: '600',
+                              }}
+                            >
+                              {Number(selectedItemsById[item.id]?.count ?? 0) > 0
+                                ? `Add (${Number(selectedItemsById[item.id]?.count ?? 0)})`
+                                : 'Add'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   ))}
@@ -451,7 +533,63 @@ export default function CateringScreen() {
 
   const onNext = () => {
     if (!canGoNext()) return;
-    if (step < 4) setStep((s) => s + 1);
+    if (step < 4) {
+      setStep((s) => s + 1);
+      return;
+    }
+
+    const totalSelected = Object.values(selectedItemsById).reduce((acc, x) => acc + Math.max(0, Number(x.count ?? 0)), 0);
+    if (totalSelected <= 0) {
+      Alert.alert('Select items', 'Please add at least 1 item to create a quote.');
+      return;
+    }
+
+    const paxFromRange = (r: StepState['guestsRange']) => {
+      if (r === '10-40') return 40;
+      if (r === '41-150') return 150;
+      if (r === '151-400') return 400;
+      if (r === '400+') return 500;
+      return 80;
+    };
+
+    const toIsoDate = (d: Date) => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
+
+    const baseDate = (() => {
+      if (state.dateOption === 'date' && specificDate) return specificDate;
+      const d = new Date();
+      if (state.dateOption === 'this_week') d.setDate(d.getDate() + 7);
+      if (state.dateOption === 'this_month') d.setDate(d.getDate() + 30);
+      return d;
+    })();
+
+    const selection = {
+      kind: 'catering',
+      occasion: state.occasion ?? '',
+      guestsRange: state.guestsRange ?? '',
+      mealType: state.mealType ?? '',
+      items: Object.values(selectedItemsById)
+        .map((x) => ({
+          id: x.item.id,
+          name: x.item.name,
+          count: x.count,
+          accompaniments: x.accompaniments ?? [],
+        }))
+        .filter((x) => x.id && Number(x.count) > 0),
+    };
+
+    router.push({
+      pathname: '/catering-quote',
+      params: {
+        selection: JSON.stringify(selection),
+        pax: String(paxFromRange(state.guestsRange)),
+        eventDate: toIsoDate(baseDate),
+      },
+    } as any);
   };
 
   const onBack = () => {
@@ -463,7 +601,7 @@ export default function CateringScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       {/* Simple header */}
  <View
   style={{
@@ -501,7 +639,8 @@ export default function CateringScreen() {
       <View
         style={{
           paddingHorizontal: 16,
-          paddingVertical: 12,
+          paddingTop: 12,
+          paddingBottom: 16 + insets.bottom,
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
           backgroundColor: '#FFFFFF',

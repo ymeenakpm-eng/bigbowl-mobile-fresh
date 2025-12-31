@@ -30,8 +30,10 @@ const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 const ADVANCE_PERCENT = Number(process.env.ADVANCE_PERCENT ?? 30);
 const GST_RATE = Number(process.env.GST_RATE ?? 0.05);
 const WEEKEND_SURGE_PCT = Number(process.env.WEEKEND_SURGE_PCT ?? 0);
-const FREE_KM = Number(process.env.FREE_KM ?? 10);
-const PER_KM_FEE = Number(process.env.PER_KM_FEE ?? 0);
+const FREE_KM = Number(process.env.FREE_KM ?? 5);
+const PER_KM_FEE_RAW = Number(process.env.PER_KM_FEE ?? 15);
+const PER_KM_FEE = PER_KM_FEE_RAW >= 100 ? Math.round(PER_KM_FEE_RAW) : Math.round(PER_KM_FEE_RAW * 100);
+const PER_KM_FEE_RUPEES = PER_KM_FEE_RAW >= 100 ? PER_KM_FEE_RAW / 100 : PER_KM_FEE_RAW;
 
 const BOWLS_DELIVERY_FEE = Number(process.env.BOWLS_DELIVERY_FEE ?? 9900);
 const BOWLS_FREE_DELIVERY_QTY = Number(process.env.BOWLS_FREE_DELIVERY_QTY ?? 25);
@@ -429,7 +431,7 @@ function computeQuote({ pkg, pax, distanceKm, eventDate, addons = [], pricing = 
   if (PER_KM_FEE > 0 && dist > FREE_KM) {
     const fee = Math.round((dist - FREE_KM) * PER_KM_FEE);
     subtotal += fee;
-    breakdown.push({ label: 'Distance fee', amount: fee });
+    breakdown.push({ label: `Distance fee (₹${Math.round(PER_KM_FEE_RUPEES)}/km after ${Math.round(FREE_KM)}km)`, amount: fee });
   }
 
   if (WEEKEND_SURGE_PCT > 0 && isWeekend(eventDate)) {

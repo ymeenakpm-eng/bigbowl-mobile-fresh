@@ -305,68 +305,6 @@ export const hyderabadItems: FoodItem[] = [
     isVeg: false,
     prepTime: '30-40 min',
   },
-
-  // BOWLS
-  {
-    id: 'bowl-biryani-single',
-    name: 'Biryani Bowl (Single Serve)',
-    description: 'Individual biryani bowl with raita and salan.',
-    price: 299,
-    category: 'Bowls',
-    image:
-      'https://images.unsplash.com/photo-1604908176997-1251884b08a0?auto=format&fit=crop&w=800&q=80',
-    rating: 4.7,
-    isVeg: false,
-    prepTime: '25-30 min',
-  },
-  {
-    id: 'bowl-comfort-meal',
-    name: 'Comfort Meal Bowl',
-    description: 'Rice bowl with dal, curry and salad in a single comfort portion.',
-    price: 249,
-    category: 'Bowls',
-    image:
-      'https://images.unsplash.com/photo-1625945277069-2f1c9c6b2217?auto=format&fit=crop&w=800&q=80',
-    rating: 4.5,
-    isVeg: true,
-    prepTime: '20-25 min',
-  },
-  {
-    id: 'bowl-curd-rice',
-    name: 'Curd Rice Bowl',
-    description: 'Cooling curd rice with pickle and papad.',
-    price: 199,
-    category: 'Bowls',
-    image:
-      'https://images.unsplash.com/photo-1625945277069-2f1c9c6b2217?auto=format&fit=crop&w=800&q=80',
-    rating: 4.4,
-    isVeg: true,
-    prepTime: '15-20 min',
-  },
-  {
-    id: 'bowl-rajma-chawal',
-    name: 'Rajma Chawal Bowl',
-    description: 'Rajma gravy with steamed rice and onions.',
-    price: 259,
-    category: 'Bowls',
-    image:
-      'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=800&q=80',
-    rating: 4.5,
-    isVeg: true,
-    prepTime: '20-25 min',
-  },
-  {
-    id: 'bowl-chicken-curry',
-    name: 'Chicken Curry Rice Bowl',
-    description: 'Chicken curry with rice and salad.',
-    price: 299,
-    category: 'Bowls',
-    image:
-      'https://images.unsplash.com/photo-1562967914-608f82629710?auto=format&fit=crop&w=800&q=80',
-    rating: 4.6,
-    isVeg: false,
-    prepTime: '25-30 min',
-  },
 ];
 
-export const popularItems: FoodItem[] = hyderabadItems;
+export const popularItems: FoodItem[] = hyderabadItems.filter((i) => i.category !== 'Bowls');

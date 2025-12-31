@@ -54,11 +54,13 @@ const FALLBACK_TIERS: Tier[] = [
 const Card = ({
   title,
   subtitle,
+  rules,
   selected,
   onPress,
 }: {
   title: string;
   subtitle: string;
+  rules: Record<string, number>;
   selected: boolean;
   onPress: () => void;
 }) => (
@@ -76,6 +78,24 @@ const Card = ({
   >
     <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 4 }}>{title}</Text>
     <Text style={{ fontSize: 12, color: '#6B7280' }}>{subtitle}</Text>
+    <View style={{ marginTop: 10 }}>
+      {([
+        'Starters',
+        'Main Course',
+        'Rice / Biryani',
+        'Breads',
+        'Accompaniments',
+        'Desserts',
+      ] as const).map((k) => {
+        const n = Number((rules as any)?.[k] ?? 0);
+        if (!Number.isFinite(n) || n <= 0) return null;
+        return (
+          <Text key={k} style={{ fontSize: 12, color: '#111827', marginBottom: 4 }}>
+            {n} {k}
+          </Text>
+        );
+      })}
+    </View>
   </TouchableOpacity>
 );
 
@@ -120,7 +140,7 @@ export default function PartyBoxTypeScreen() {
   }, [params]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -134,7 +154,7 @@ export default function PartyBoxTypeScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         {loadError ? (
           <View style={{ borderRadius: 14, padding: 12, backgroundColor: '#FEF3C7', marginBottom: 12 }}>
             <Text style={{ fontSize: 12, color: '#7C2D12', fontWeight: '700' }}>Can’t reach server</Text>
@@ -149,6 +169,7 @@ export default function PartyBoxTypeScreen() {
             key={t.key}
             title={`${t.title}  •  ₹${Math.round(Number(t.perPlate) / 100)}/plate`}
             subtitle={t.subtitle}
+            rules={t.rules}
             selected={boxType === t.key}
             onPress={() => setBoxType(t.key)}
           />

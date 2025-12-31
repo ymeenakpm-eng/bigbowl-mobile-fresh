@@ -1,11 +1,12 @@
 import { useRouter } from 'expo-router';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Image, Linking, ScrollView, Share, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Animated, Dimensions, Image, Linking, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useLocation } from '../contexts/LocationContext';
 
-import { FoodItem, popularItems } from '../data/food';
 const vijayawadaHero = require('../../assets/images/vijayawada-hero.jpg');
 const bulkBanner = require('../../assets/images/banners/bulk-banner.png');
 const occasionsBanner = require('../../assets/images/banners/occasions.jpg');
@@ -17,32 +18,29 @@ const foodAnim4 = require('../../assets/images/animated/food-4.png');
 const HomeScreen = () => {
   const { getCartItemCount, getCartTotal, addToCart } = useCart();
   const { state: locationState } = useLocation();
+  const { state: authState } = useAuth();
+
+  const insets = useSafeAreaInsets();
 
   const count = getCartItemCount();
   const total = getCartTotal();
+
+  const isLoggedIn = Boolean(authState.token);
 
   const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const scrollRef = useRef<ScrollView | null>(null);
 
-  // Food carousel images (after first hero)
   const sliderImages = [foodAnim1, foodAnim2, foodAnim3, foodAnim4];
-
-  // Card sizing for parallax carousel
   const { width: SCREEN_WIDTH } = Dimensions.get('window');
-  // Make each card span the full screen width so there is no side space when centered
   const PARALLAX_CARD_WIDTH = SCREEN_WIDTH;
   const PARALLAX_CARD_SPACING = 16;
   const PARALLAX_HORIZONTAL_PADDING = 0;
-
   const PARALLAX_STEP = PARALLAX_CARD_WIDTH + PARALLAX_CARD_SPACING;
   const PARALLAX_TOTAL_CARDS = sliderImages.length;
   const PARALLAX_MAX_OFFSET = PARALLAX_STEP * (PARALLAX_TOTAL_CARDS - 1);
 
-  // Existing auto-moving strip animation
   const scrollAnim = useRef(new Animated.Value(0)).current;
-
-  // Parallax foreground animation (drives background via interpolate)
   const frontAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -63,7 +61,6 @@ const HomeScreen = () => {
   }, [scrollAnim]);
 
   useEffect(() => {
-    // Step through each card: snap to center, wait, then move quickly to next
     const runSequence = () => {
       const sequence: any[] = [];
 
@@ -73,11 +70,9 @@ const HomeScreen = () => {
         sequence.push(
           Animated.timing(frontAnim, {
             toValue,
-            // first card: jump to start instantly, others slide in ~0.5s–0.6s
             duration: i === 0 ? 0 : 600,
             useNativeDriver: true,
           }),
-          // Pause on each centered card for ~1s
           Animated.delay(1000),
         );
       }
@@ -92,176 +87,41 @@ const HomeScreen = () => {
     };
   }, [frontAnim, PARALLAX_STEP, PARALLAX_TOTAL_CARDS]);
 
-  const filteredItems = useMemo(() => {
-    if (selectedCategory === 'All') return popularItems;
-    return popularItems.filter((item) => item.category === selectedCategory);
-  }, [selectedCategory]);
-
-  const renderItem = ({ item }: { item: FoodItem }) => (
-    <TouchableOpacity
-      onPress={() => router.push(`/food/${item.id}`)}
-      style={{
-        flexDirection: 'row',
-        paddingVertical: 4,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eeeeee',
-        gap: 12,
-      }}
-    >
-      <Image
-        source={{ uri: item.image }}
-        style={{
-          width: 80,
-          height: 80,
-          borderRadius: 12,
-          backgroundColor: '#dddddd',
-        }}
-      />
-      <View style={{ flex: 1 }}>
-        {/* Category + veg/non-veg badges */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            marginBottom: 2,
-          }}
-        >
-          <View
-            style={{
-              paddingHorizontal: 8,
-              paddingVertical: 2,
-              borderRadius: 999,
-              backgroundColor:
-                item.category === 'Party Boxes'
-                  ? 'rgba(192,38,211,0.12)'
-                  : item.category === 'Meal Boxes'
-                  ? 'rgba(14,165,233,0.12)'
-                  : item.category === 'Snack Boxes'
-                  ? 'rgba(249,115,22,0.12)'
-                  : item.category === 'Bowls'
-                  ? 'rgba(34,197,94,0.12)'
-                  : 'rgba(148,163,184,0.12)',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 10,
-                fontWeight: '600',
-                color:
-                  item.category === 'Party Boxes'
-                    ? '#C026D3'
-                    : item.category === 'Meal Boxes'
-                    ? '#0EA5E9'
-                    : item.category === 'Snack Boxes'
-                    ? '#F97316'
-                    : item.category === 'Bowls'
-                    ? '#16A34A'
-                    : '#4B5563',
-              }}
-            >
-              {item.category}
-            </Text>
-          </View>
-          <View
-            style={{
-              marginLeft: 6,
-              paddingHorizontal: 6,
-              paddingVertical: 2,
-              borderRadius: 999,
-              borderWidth: 1,
-              borderColor: item.isVeg ? '#16A34A' : '#DC2626',
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 9,
-                fontWeight: '600',
-                color: item.isVeg ? '#16A34A' : '#DC2626',
-              }}
-            >
-              {item.isVeg ? 'VEG' : 'NON-VEG'}
-            </Text>
-          </View>
-        </View>
-
-        <Text style={{ fontWeight: '600', marginBottom: 2 }}>{item.name}</Text>
-
-        <Text style={{ color: '#666666', fontSize: 12 }} numberOfLines={2}>
-          {item.description}
-        </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            marginTop: 6,
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ color: '#FF6B6B', fontWeight: '700' }}>
-            Rs {item.price}
-          </Text>
-          <TouchableOpacity
-            onPress={() => addToCart({ name: item.name, price: item.price })}
-            style={{
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-              borderRadius: 16,
-              backgroundColor: '#3366FF',
-            }}
-          >
-            <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>
-              + Add
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <View
       style={{
         flex: 1,
-        paddingTop: 40,
+        paddingTop: 0,
         paddingHorizontal: 0,
         backgroundColor: '#FFFFFF',
       }}
     >
       {/* Top brand header on same light yellow as hero */}
-      <View
-        style={{
-          backgroundColor: '#FEF3C7',
-          paddingHorizontal: 16,
-          paddingTop: 8,
-          paddingBottom: 6,
-        }}
-      >
+      <SafeAreaView style={{ backgroundColor: '#FEF3C7' }} edges={['top']}>
         <View
           style={{
+            height: 56,
+            paddingHorizontal: 16,
             flexDirection: 'row',
             alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
-          {/* Left: account avatar + location pill */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 }}>
             <View
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
+                width: 34,
+                height: 34,
+                borderRadius: 17,
                 backgroundColor: '#F97316',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginRight: 8,
+                marginRight: 10,
               }}
             >
-              <Text style={{ color: '#FFF7ED', fontWeight: '700', fontSize: 14 }}>BB</Text>
+              <Text style={{ color: '#FFF7ED', fontWeight: '700', fontSize: 13 }}>BB</Text>
             </View>
+
             <TouchableOpacity
               activeOpacity={0.85}
               onPress={() => router.push('/location' as any)}
@@ -269,67 +129,50 @@ const HomeScreen = () => {
                 flexDirection: 'row',
                 alignItems: 'center',
                 paddingHorizontal: 10,
-                paddingVertical: 5,
+                paddingVertical: 6,
                 borderRadius: 999,
                 backgroundColor: '#FED7AA',
+                flexShrink: 1,
               }}
             >
+              <Text style={{ fontSize: 14 }}>📍</Text>
               <Text
+                numberOfLines={1}
                 style={{
+                  marginLeft: 6,
                   fontSize: 13,
                   fontWeight: '700',
                   color: '#7C2D12',
+                  flexShrink: 1,
                 }}
               >
-                {locationState.city}
-              </Text>
-              <Text style={{ marginLeft: 6, fontSize: 11, color: '#7C2D12' }}>
-                {locationState.pincode}
+                {locationState.city} – {locationState.pincode}
               </Text>
               <Text style={{ marginLeft: 6, fontSize: 12, color: '#7C2D12' }}>▾</Text>
             </TouchableOpacity>
           </View>
 
-          {/* Center: BigBowl title */}
-          <View style={{ flex: 1, alignItems: 'center' }}>
-            <Text
-              style={{
-                fontSize: 20,
-                fontWeight: '700',
-                color: '#7C2D12',
-              }}
-            >
-              BigBowl
-            </Text>
-          </View>
-
-          {/* Right: Cart icon */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => router.push('/cart' as any)}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                paddingHorizontal: 8,
-                paddingVertical: 4,
+                paddingHorizontal: 10,
+                paddingVertical: 6,
                 borderRadius: 999,
                 backgroundColor: '#FDE68A',
               }}
             >
-              <Text style={{ fontSize: 16, marginRight: 4 }}>🛒</Text>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#7C2D12' }}>
+              <Text style={{ fontSize: 14, marginRight: 6 }}>🛒</Text>
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#7C2D12' }}>
                 {count} item{count === 1 ? '' : 's'}
               </Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
 
       <ScrollView
         ref={scrollRef}
@@ -343,7 +186,7 @@ const HomeScreen = () => {
             borderRadius: 0,
             marginBottom: 12,
             backgroundColor: '#FEF3C7', // light yellow
-            paddingVertical: 8,
+            paddingVertical: 6,
             paddingHorizontal: 20,
           }}
         >
@@ -353,77 +196,81 @@ const HomeScreen = () => {
               flexDirection: 'row',
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: 8,
+              marginBottom: 6,
+              position: 'relative',
             }}
           >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '800',
+                  color: '#7C2D12',
+                }}
+              >
+                Big Bowl
+              </Text>
+            </View>
+
             <Text
               style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                textAlign: 'center',
                 fontSize: 20,
                 fontWeight: '700',
                 color: '#7C2D12',
               }}
+              numberOfLines={1}
             >
               Hello, Vijayawada!
             </Text>
 
-            {/* Rider icon on right, pointing to the right */}
-            <Text style={{ fontSize: 28, marginLeft: 4 }}>🛵</Text>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => router.push('/(tabs)/account' as any)}
+              style={{
+                zIndex: 1,
+                flexDirection: 'row',
+                alignItems: 'center',
+                paddingHorizontal: 10,
+                paddingVertical: 6,
+                borderRadius: 999,
+                backgroundColor: '#FED7AA',
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '800', color: '#7C2D12' }}>
+                {isLoggedIn ? 'Account' : 'Login'}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Four main BigBowl box cards inside hero */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingVertical: 4 }}
-            style={{ marginBottom: 8 }}
-          >
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 4 }}>
             {[
-              { label: 'Party Box', category: 'Party Boxes', emoji: '🎉' },
-              { label: 'Meal Box', category: 'Meal Boxes', emoji: '🍱' },
-              { label: 'Snack Box', category: 'Snack Boxes', emoji: '🍟' },
-              { label: 'Bowls', category: 'Bowls', emoji: '🥘' },
+              { label: 'Party Box', emoji: '🎉', onPress: () => router.push('/party-box/details' as any) },
+              { label: 'Individual Meal Box', emoji: '🍱', onPress: () => router.push('/meal-box/schedule' as any) },
+              { label: 'Snack Box', emoji: '🍟', onPress: () => router.push('/snack-box/occasion' as any) },
+              { label: 'Catering', emoji: '🍽️', onPress: () => router.push('/catering' as any) },
             ].map((box) => (
               <TouchableOpacity
                 key={box.label}
                 activeOpacity={0.85}
-                onPress={() => {
-                  if (box.label === 'Party Box') {
-                    router.push('/party-box/details' as any);
-                    return;
-                  }
-                  if (box.label === 'Meal Box') {
-                    router.push('/meal-box/type' as any);
-                    return;
-                  }
-                  if (box.label === 'Snack Box') {
-                    router.push('/snack-box/occasion' as any);
-                    return;
-                  }
-
-                  if (box.label === 'Bowls') {
-                    router.push('/bowls' as any);
-                    return;
-                  }
-
-                  setSelectedCategory(box.category);
-                  requestAnimationFrame(() => {
-                    if (scrollRef.current) {
-                      scrollRef.current.scrollTo({ y: 700, animated: true });
-                    }
-                  });
-                }}
+                onPress={box.onPress}
                 style={{
-                  width: 140,
-                  height: 90,
+                  width: '48%',
+                  height: 78,
                   borderRadius: 16,
-                  marginRight: 10,
-                  padding: 10,
+                  marginBottom: 10,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
                   backgroundColor: '#4C1D95',
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}
               >
-                <Text style={{ fontSize: 22, marginBottom: 4 }}>{box.emoji}</Text>
+                <Text style={{ fontSize: 20, marginBottom: 4 }}>{box.emoji}</Text>
+
                 <Text
                   style={{
                     color: '#FDE68A',
@@ -436,16 +283,19 @@ const HomeScreen = () => {
                   {box.label}
                 </Text>
                 <Text style={{ color: '#EDE9FE', fontSize: 10, textAlign: 'center' }}>
-                  View {box.label.toLowerCase()} options
+                  View {box.label === 'Individual Meal Box' ? 'meal box' : box.label.toLowerCase()} options
+                </Text>
+                <Text style={{ color: '#EDE9FE', fontSize: 9, textAlign: 'center', marginTop: 2 }}>
+                  Minimum 10+ orders required.
                 </Text>
               </TouchableOpacity>
             ))}
-          </ScrollView>
+          </View>
 
-          {/* Three feature cards (How it works, Call, Refer) */}
+          {/* Two feature cards (How it works, Call) */}
           <View
             style={{
-              marginTop: 8,
+              marginTop: 4,
               flexDirection: 'row',
               justifyContent: 'space-between',
             }}
@@ -460,11 +310,6 @@ const HomeScreen = () => {
                 title: 'Call & customise',
                 subtitle: 'Talk to our team',
                 emoji: '📞',
-              },
-              {
-                title: 'Refer & earn',
-                subtitle: 'Invite friends & family',
-                emoji: '🎁',
               },
             ].map((card, index) => {
               const Container: any = TouchableOpacity;
@@ -490,14 +335,6 @@ const HomeScreen = () => {
                     await Linking.openURL(phone);
                     return;
                   }
-
-                  if (card.title === 'Refer & earn') {
-                    await Share.share({
-                      message:
-                        'Try BigBowl for Party Boxes, Meal Boxes and Snack Boxes. Order now and get fresh catering in Vijayawada!',
-                    });
-                    return;
-                  }
                 },
               };
 
@@ -507,14 +344,13 @@ const HomeScreen = () => {
                   {...containerProps}
                   style={{
                     flex: 1,
-                    maxWidth: 100,
-                    height: 100,
+                    height: 90,
                     borderRadius: 16,
-                    marginRight: index < 2 ? 8 : 0,
+                    marginRight: index < 1 ? 10 : 0,
                     backgroundColor: '#3B0764',
 
                     paddingHorizontal: 8,
-                    paddingVertical: 8,
+                    paddingVertical: 6,
                     justifyContent: 'space-between',
                     alignItems: 'center',
                   }}
@@ -785,12 +621,7 @@ const HomeScreen = () => {
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => {
-            setSelectedCategory('Party Boxes');
-            requestAnimationFrame(() => {
-              if (scrollRef.current) {
-                scrollRef.current.scrollTo({ y: 700, animated: true });
-              }
-            });
+            router.push('/party-box/details' as any);
           }}
           style={{
             borderRadius: 16,
@@ -808,7 +639,7 @@ const HomeScreen = () => {
           <View
             style={{
               position: 'absolute',
-              top: -10,
+              top: -6,
               left: 32,
               right: 32,
               alignItems: 'center',
@@ -817,8 +648,8 @@ const HomeScreen = () => {
             <View
               style={{
                 borderRadius: 20,
-                paddingVertical: 10,
-                paddingHorizontal: 20,
+                paddingVertical: 12,
+                paddingHorizontal: 22,
                 backgroundColor: '#5B21B6',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -832,15 +663,21 @@ const HomeScreen = () => {
               <Text
                 style={{
                   color: '#FDE68A',
-                  fontSize: 15,
+                  fontSize: 16,
                   fontWeight: '700',
                   marginBottom: 2,
                 }}
               >
-                BigBowl Delivery Box
+                BigBowl Party Box
               </Text>
               <Text style={{ color: '#EDE9FE', fontSize: 10 }}>
                 Mix & match biryanis, curries & starters.
+              </Text>
+              <Text style={{ color: '#EDE9FE', fontSize: 10, marginTop: 2 }}>
+                Minimum 10+ orders required.
+              </Text>
+              <Text style={{ color: '#EDE9FE', fontSize: 10, marginTop: 2 }}>
+                Need to place order 2 days ahead.
               </Text>
             </View>
           </View>
@@ -885,6 +722,10 @@ const HomeScreen = () => {
             </Text>
 
             <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => {
+                router.push('/catering' as any);
+              }}
               style={{
                 alignSelf: 'flex-start',
                 paddingHorizontal: 12,
@@ -1097,7 +938,7 @@ const HomeScreen = () => {
             position: 'absolute',
             left: 16,
             right: 16,
-            bottom: 16,
+            bottom: 24 + insets.bottom,
             paddingVertical: 10,
             paddingHorizontal: 14,
             borderRadius: 18,

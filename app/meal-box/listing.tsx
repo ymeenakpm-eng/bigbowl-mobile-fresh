@@ -10,6 +10,9 @@ type Params = {
   pref?: string;
   budget?: string;
   spice?: string;
+  date?: string;
+  eventDate?: string;
+  time?: string;
 };
 
 type Pref = 'veg' | 'non_veg';
@@ -200,7 +203,7 @@ export default function MealBoxListingScreen() {
   }, [budget, pref, remoteBoxes, spice, type]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}

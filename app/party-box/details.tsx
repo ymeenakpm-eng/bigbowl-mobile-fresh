@@ -7,7 +7,7 @@ type GuestsRange = '10-15' | '15-25' | '25-50' | '50+';
 
 type FoodPref = 'veg' | 'non_veg' | 'mixed';
 
-type DateOption = 'today' | 'tomorrow' | 'pick_date';
+type DateOption = 'tomorrow' | 'pick_date';
 
 type TimeSlot = '11:00-12:00' | '12:00-13:00' | '19:00-20:00' | '20:00-21:00';
 
@@ -46,7 +46,7 @@ export default function PartyBoxDetailsScreen() {
   const [guestsRange, setGuestsRange] = useState<GuestsRange | null>(null);
   const [occasion, setOccasion] = useState<string | null>(null);
   const [foodPref, setFoodPref] = useState<FoodPref>('mixed');
-  const [dateOption, setDateOption] = useState<DateOption>('pick_date');
+  const [dateOption, setDateOption] = useState<DateOption>('tomorrow');
   const [pickedDate, setPickedDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [timeSlot, setTimeSlot] = useState<TimeSlot>('12:00-13:00');
@@ -58,7 +58,6 @@ export default function PartyBoxDetailsScreen() {
     const tomorrow = new Date();
     tomorrow.setDate(today.getDate() + 1);
 
-    if (dateOption === 'today') return today.toLocaleDateString();
     if (dateOption === 'tomorrow') return tomorrow.toLocaleDateString();
     return pickedDate ? pickedDate.toLocaleDateString() : 'Pick date';
   }, [dateOption, pickedDate]);
@@ -69,13 +68,7 @@ export default function PartyBoxDetailsScreen() {
     tomorrow.setDate(today.getDate() + 1);
 
     const chosen =
-      dateOption === 'today'
-        ? today
-        : dateOption === 'tomorrow'
-          ? tomorrow
-          : pickedDate
-            ? pickedDate
-            : null;
+      dateOption === 'tomorrow' ? tomorrow : pickedDate ? pickedDate : null;
 
     if (!chosen) return '';
     const yyyy = chosen.getFullYear();
@@ -93,7 +86,7 @@ export default function PartyBoxDetailsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View
         style={{
           flexDirection: 'row',
@@ -149,7 +142,6 @@ export default function PartyBoxDetailsScreen() {
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
           {([
-            { key: 'today', label: 'Today' },
             { key: 'tomorrow', label: 'Tomorrow' },
             { key: 'pick_date', label: selectedDateLabel },
           ] as const).map((d) => (
@@ -170,7 +162,8 @@ export default function PartyBoxDetailsScreen() {
         {showDatePicker ? (
           <DateTimePicker
             mode="date"
-            value={pickedDate ?? new Date()}
+            value={pickedDate ?? new Date(new Date().setDate(new Date().getDate() + 1))}
+            minimumDate={new Date(new Date().setDate(new Date().getDate() + 1))}
             onChange={onDateChange}
           />
         ) : null}

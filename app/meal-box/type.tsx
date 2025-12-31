@@ -1,8 +1,14 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 type MealType = 'single' | 'family' | 'office';
+
+type Params = {
+  date?: string;
+  eventDate?: string;
+  time?: string;
+};
 
 const Card = ({
   title,
@@ -34,13 +40,14 @@ const Card = ({
 
 export default function MealBoxTypeScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<Params>();
 
   const [mealType, setMealType] = useState<MealType | null>(null);
 
   const canContinue = useMemo(() => Boolean(mealType), [mealType]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 40 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -51,7 +58,7 @@ export default function MealBoxTypeScreen() {
         <Text style={{ fontSize: 20, fontWeight: '700' }}>Meal Type</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Card
           title="Single Meal"
           subtitle="Best for 1 person"
@@ -75,7 +82,13 @@ export default function MealBoxTypeScreen() {
           disabled={!canContinue}
           onPress={() => {
             if (!mealType) return;
-            router.push(`/meal-box/preferences?type=${encodeURIComponent(mealType)}` as any);
+            router.push(
+              `/meal-box/preferences?type=${encodeURIComponent(mealType)}&date=${encodeURIComponent(
+                String(params.date ?? ''),
+              )}&eventDate=${encodeURIComponent(String(params.eventDate ?? ''))}&time=${encodeURIComponent(
+                String(params.time ?? ''),
+              )}` as any,
+            );
           }}
           activeOpacity={0.9}
           style={{
