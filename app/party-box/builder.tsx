@@ -20,6 +20,15 @@ type Params = {
 
 type SectionKey = 'Starters' | 'Main Course' | 'Rice / Biryani' | 'Breads' | 'Accompaniments' | 'Desserts';
 
+function sectionToImageCategory(section: SectionKey): Parameters<typeof mapItemToImage>[0]['category'] {
+  if (section === 'Starters') return 'starters';
+  if (section === 'Main Course') return 'main_course';
+  if (section === 'Rice / Biryani') return 'rice_biryani';
+  if (section === 'Breads') return 'breads';
+  if (section === 'Accompaniments') return 'accompaniments';
+  return 'desserts';
+}
+
 type FoodPref = 'veg' | 'non_veg' | 'mixed';
 
 type Item = {
@@ -180,10 +189,11 @@ export default function PartyBoxBuilderScreen() {
               const selected = selectedIds.includes(item.id);
               const deltaPaise = Number(item.priceDeltaPerPlate ?? item.premiumDelta ?? 0);
               const deltaRupees = Math.round((Number.isFinite(deltaPaise) ? deltaPaise : 0) / 100);
-              const img =
-                section === 'Starters' && item.isVeg
-                  ? mapItemToImage({ itemName: item.name, category: 'starters', subcategory: 'veg' })
-                  : null;
+              const img = mapItemToImage({
+                itemName: item.name,
+                category: sectionToImageCategory(section),
+                subcategory: item.isVeg ? 'veg' : 'non_veg',
+              });
               return (
                 <TouchableOpacity
                   key={item.id}
@@ -199,14 +209,12 @@ export default function PartyBoxBuilderScreen() {
                     flexDirection: 'column',
                   }}
                 >
-                  {img ? (
-                    <Image
-                      source={img}
-                      style={{ width: '100%', height: 120, borderRadius: 12, marginBottom: 10 }}
-                      contentFit="cover"
-                      transition={150}
-                    />
-                  ) : null}
+                  <Image
+                    source={img}
+                    style={{ width: '100%', height: 120, borderRadius: 12, marginBottom: 10 }}
+                    contentFit="cover"
+                    transition={150}
+                  />
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Text style={{ fontSize: 14, fontWeight: '600', color: '#111827', flex: 1, paddingRight: 8 }}>
                       {item.name}
