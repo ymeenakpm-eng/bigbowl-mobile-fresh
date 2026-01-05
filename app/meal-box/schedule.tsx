@@ -3,6 +3,9 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+import { setStoredItem } from '@/src/utils/storage';
+
 type DateOption = 'tomorrow' | 'pick_date';
 
 type TimeSlot = '11:00-12:00' | '12:00-13:00' | '19:00-20:00' | '20:00-21:00';
@@ -80,17 +83,8 @@ export default function MealBoxScheduleScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Meal Schedule</Text>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Meal Schedule" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Delivery date</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -135,6 +129,7 @@ export default function MealBoxScheduleScreen() {
           disabled={!canContinue}
           onPress={() => {
             if (!canContinue) return;
+            void setStoredItem('bb_delivery_intent_v1', JSON.stringify({ kind: 'meal_box', deliveryDateISO: selectedEventDateISO }));
             router.push(
               `/meal-box/type?date=${encodeURIComponent(selectedDateLabel)}&eventDate=${encodeURIComponent(
                 selectedEventDateISO,

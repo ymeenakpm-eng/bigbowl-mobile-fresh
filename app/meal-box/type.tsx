@@ -2,6 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 type MealType = 'single' | 'family' | 'office';
 
 type Params = {
@@ -47,17 +49,8 @@ export default function MealBoxTypeScreen() {
   const canContinue = useMemo(() => Boolean(mealType), [mealType]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Meal Type</Text>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Meal Type" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Card
           title="Single Meal"

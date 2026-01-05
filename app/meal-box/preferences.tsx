@@ -2,6 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 type Pref = 'veg' | 'non_veg';
 
 type Budget = '99-149' | '150-199' | '200+';
@@ -51,20 +53,8 @@ export default function MealBoxPreferencesScreen() {
   }, [params.type]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700' }}>Preferences</Text>
-          <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{subtitle}</Text>
-        </View>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Preferences" subtitle={subtitle} />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Veg / Non-veg</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>

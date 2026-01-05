@@ -2,6 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 export default function PaymentFailureScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ orderId?: string; reason?: string; bookingId?: string; bowlOrderId?: string; amountPaise?: string; currency?: string }>();
@@ -14,7 +16,8 @@ export default function PaymentFailureScreen() {
   const currency = String(params.currency ?? 'INR');
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 60 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Payment Failed" subtitle={orderId ? `Order: ${orderId}` : null} />
       <View style={{ paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '900', marginBottom: 8 }}>
           Payment Failed
@@ -64,20 +67,6 @@ export default function PaymentFailureScreen() {
           }}
         >
           <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Retry</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => router.back()}
-          style={{
-            paddingVertical: 12,
-            borderRadius: 16,
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#DDDDDD',
-          }}
-        >
-          <Text style={{ fontWeight: '800' }}>Back</Text>
         </TouchableOpacity>
       </View>
     </View>

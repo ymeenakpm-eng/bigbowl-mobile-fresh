@@ -2,6 +2,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 import { apiJson } from '@/src/utils/api';
 
 type SectionKey = 'Starters' | 'Main Course' | 'Rice / Biryani' | 'Breads' | 'Accompaniments' | 'Desserts';
@@ -117,20 +119,21 @@ export default function PartyBoxReviewScreen() {
   }, [params.guests]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Review & Cart</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Review & Cart" />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
-        <View style={{ borderRadius: 16, padding: 14, backgroundColor: '#F8FAFC', marginBottom: 12 }}>
-          <Text style={{ fontSize: 16, fontWeight: '800', marginBottom: 6 }}>{title}</Text>
+        <View
+          style={{
+            borderRadius: 16,
+            padding: 14,
+            backgroundColor: '#F6F3FB',
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            marginBottom: 12,
+          }}
+        >
+          <Text style={{ fontSize: 16, fontWeight: '900', marginBottom: 6, color: '#111827' }}>{title}</Text>
           <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 2 }}>
             Guests: {String(params.guests ?? '-')}  |  Occasion: {String(params.occ ?? '-')}
           </Text>
@@ -139,25 +142,33 @@ export default function PartyBoxReviewScreen() {
             {' • '}
             {String(params.time ?? '-')}
           </Text>
-          <Text style={{ fontSize: 12, color: '#111827', fontWeight: '700', marginTop: 6 }}>
+          <Text style={{ fontSize: 12, color: '#111827', fontWeight: '800', marginTop: 6 }}>
             Price/plate (est.): ₹{Math.round(Number(tier?.perPlate ?? 0) / 100)}
           </Text>
           {premiumPerPlate > 0 ? (
-            <Text style={{ fontSize: 12, color: '#111827', fontWeight: '700', marginTop: 4 }}>
+            <Text style={{ fontSize: 12, color: '#111827', fontWeight: '800', marginTop: 4 }}>
               Premium add-ons: +₹{Math.round(premiumPerPlate / 100)}/plate
             </Text>
           ) : null}
         </View>
 
-        <View style={{ borderRadius: 16, padding: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB' }}>
-          <Text style={{ fontSize: 14, fontWeight: '800', marginBottom: 8 }}>Selected items</Text>
+        <View
+          style={{
+            borderRadius: 16,
+            padding: 14,
+            backgroundColor: '#F6F3FB',
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '900', marginBottom: 8, color: '#111827' }}>Selected items</Text>
           {selectedItemMeta.length === 0 ? (
             <Text style={{ fontSize: 12, color: '#6B7280' }}>No items selected.</Text>
           ) : (
             selectedItemMeta.map((it, idx) => (
               <View key={`${it.id}_${idx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                 <Text style={{ fontSize: 12, color: '#111827', paddingRight: 10, flex: 1 }}>• {it.name}</Text>
-                <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '700' }}>
+                <Text style={{ fontSize: 12, color: '#6B7280', fontWeight: '800' }}>
                   {it.deltaRupees > 0 ? `+₹${it.deltaRupees}/plate` : 'Included'}
                 </Text>
               </View>

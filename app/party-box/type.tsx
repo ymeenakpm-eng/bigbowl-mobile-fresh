@@ -1,6 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+ 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
 
 import { apiJson } from '@/src/utils/api';
 
@@ -53,14 +56,20 @@ const FALLBACK_TIERS: Tier[] = [
 
 const Card = ({
   title,
+  priceLabel,
   subtitle,
   rules,
+  badge,
+  tint,
   selected,
   onPress,
 }: {
   title: string;
+  priceLabel: string;
   subtitle: string;
   rules: Record<string, number>;
+  badge: string;
+  tint: string;
   selected: boolean;
   onPress: () => void;
 }) => (
@@ -68,31 +77,62 @@ const Card = ({
     onPress={onPress}
     activeOpacity={0.9}
     style={{
-      borderRadius: 16,
+      borderRadius: 18,
       padding: 14,
       borderWidth: selected ? 2 : 1,
-      borderColor: selected ? '#7C3AED' : '#E5E7EB',
-      backgroundColor: selected ? '#F5F3FF' : '#FFFFFF',
+      borderColor: selected ? '#4C1D95' : '#E5E7EB',
+      backgroundColor: selected ? '#F4F1FA' : '#F6F3FB',
       marginBottom: 12,
+      shadowColor: '#000',
+      shadowOpacity: 0.08,
+      shadowRadius: 10,
+      shadowOffset: { width: 0, height: 6 },
+      elevation: 3,
     }}
   >
-    <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 4 }}>{title}</Text>
-    <Text style={{ fontSize: 12, color: '#6B7280' }}>{subtitle}</Text>
-    <View style={{ marginTop: 10 }}>
-      {([
-        'Starters',
-        'Main Course',
-        'Rice / Biryani',
-        'Breads',
-        'Accompaniments',
-        'Desserts',
-      ] as const).map((k) => {
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <View style={{ flex: 1, paddingRight: 10 }}>
+        <Text style={{ fontSize: 16, fontWeight: '900', color: '#111827' }}>{title}</Text>
+        <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 4 }}>{subtitle}</Text>
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <View
+          style={{
+            paddingHorizontal: 10,
+            paddingVertical: 6,
+            borderRadius: 999,
+            backgroundColor: '#111827',
+            marginBottom: 8,
+          }}
+        >
+          <Text style={{ color: '#FFFFFF', fontWeight: '900', fontSize: 12 }}>{priceLabel}</Text>
+        </View>
+        <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: '#FDE68A' }}>
+          <Text style={{ fontSize: 10, fontWeight: '900', color: '#7C2D12' }}>{badge}</Text>
+        </View>
+      </View>
+    </View>
+
+    <View style={{ marginTop: 12 }}>
+      {(
+        [
+          { k: 'Starters', icon: '🥘' },
+          { k: 'Main Course', icon: '🍛' },
+          { k: 'Rice / Biryani', icon: '🍲' },
+          { k: 'Breads', icon: '🍞' },
+          { k: 'Accompaniments', icon: '🥗' },
+          { k: 'Desserts', icon: '🍰' },
+        ] as const
+      ).map(({ k, icon }) => {
         const n = Number((rules as any)?.[k] ?? 0);
         if (!Number.isFinite(n) || n <= 0) return null;
         return (
-          <Text key={k} style={{ fontSize: 12, color: '#111827', marginBottom: 4 }}>
-            {n} {k}
-          </Text>
+          <View key={k} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+            <Text style={{ width: 20, textAlign: 'center' }}>{icon}</Text>
+            <Text style={{ fontSize: 12, color: '#111827', marginLeft: 6, flex: 1, lineHeight: 18 }}>
+              {n} {k}
+            </Text>
+          </View>
         );
       })}
     </View>
@@ -102,6 +142,7 @@ const Card = ({
 export default function PartyBoxTypeScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<Params>();
+  const insets = useSafeAreaInsets();
 
   const [boxType, setBoxType] = useState<BoxType | null>(null);
   const [tiers, setTiers] = useState<Tier[]>([]);
@@ -140,21 +181,10 @@ export default function PartyBoxTypeScreen() {
   }, [params]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700' }}>Party Box Type</Text>
-          {summary ? <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{summary}</Text> : null}
-        </View>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Party Box Type" subtitle={summary || null} />
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 120 + insets.bottom }}>
         {loadError ? (
           <View style={{ borderRadius: 14, padding: 12, backgroundColor: '#FEF3C7', marginBottom: 12 }}>
             <Text style={{ fontSize: 12, color: '#7C2D12', fontWeight: '700' }}>Can’t reach server</Text>
@@ -167,14 +197,26 @@ export default function PartyBoxTypeScreen() {
         {(loading ? FALLBACK_TIERS : visibleTiers).map((t) => (
           <Card
             key={t.key}
-            title={`${t.title}  •  ₹${Math.round(Number(t.perPlate) / 100)}/plate`}
+            title={t.title}
+            priceLabel={`₹${Math.round(Number(t.perPlate) / 100)}/plate`}
             subtitle={t.subtitle}
             rules={t.rules}
+            badge={t.key === 'premium' ? 'Best Seller' : t.key === 'standard' ? 'Value Pick' : 'Build Your Own'}
+            tint={'#F6F3FB'}
             selected={boxType === t.key}
             onPress={() => setBoxType(t.key)}
           />
         ))}
+      </ScrollView>
 
+      <View
+        style={{
+          position: 'absolute',
+          left: 16,
+          right: 16,
+          bottom: 12 + insets.bottom,
+        }}
+      >
         <TouchableOpacity
           disabled={!boxType}
           onPress={() => {
@@ -192,16 +234,20 @@ export default function PartyBoxTypeScreen() {
           }}
           activeOpacity={0.9}
           style={{
-            marginTop: 4,
-            paddingVertical: 12,
+            paddingVertical: 14,
             borderRadius: 18,
             backgroundColor: boxType ? '#3366FF' : '#CBD5E1',
             alignItems: 'center',
+            shadowColor: '#000',
+            shadowOpacity: 0.16,
+            shadowRadius: 10,
+            shadowOffset: { width: 0, height: 6 },
+            elevation: 6,
           }}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Select Box</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Confirm Party Box</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </View>
   );
 }

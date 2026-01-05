@@ -3,6 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../../src/contexts/CartContext';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 import { apiJson } from '@/src/utils/api';
 
 export default function CheckoutScreen() {
@@ -53,7 +55,8 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Checkout" />
       <View style={{ paddingHorizontal: 16 }}>
         <Text style={{ fontSize: 22, fontWeight: '800', marginBottom: 8 }}>
           Checkout
@@ -84,21 +87,6 @@ export default function CheckoutScreen() {
               Pay with Razorpay (Test)
             </Text>
           )}
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => router.back()}
-          style={{
-            marginTop: 10,
-            paddingVertical: 12,
-            borderRadius: 16,
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: '#DDDDDD',
-          }}
-        >
-          <Text style={{ fontWeight: '800' }}>Back</Text>
         </TouchableOpacity>
       </View>
     </View>

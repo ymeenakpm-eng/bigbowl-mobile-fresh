@@ -28,6 +28,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 const ADVANCE_PERCENT = Number(process.env.ADVANCE_PERCENT ?? 30);
+const CATERING_ADVANCE_PERCENT = Number(process.env.CATERING_ADVANCE_PERCENT ?? 50);
 const GST_RATE = Number(process.env.GST_RATE ?? 0.05);
 const WEEKEND_SURGE_PCT = Number(process.env.WEEKEND_SURGE_PCT ?? 0);
 const FREE_KM = Number(process.env.FREE_KM ?? 5);
@@ -65,6 +66,38 @@ const supabase = hasSupabaseConfig
       auth: { persistSession: false, autoRefreshToken: false },
     })
   : null;
+
+async function ensureSnacksPlatterPackage() {
+  if (!prisma || !prisma.package) return;
+  const title = 'Snacks Platter';
+  const baseData = {
+    title,
+    cuisine: 'Snacks',
+    minPax: 50,
+    basePrice: 0,
+    perPax: 12900,
+    isVeg: true,
+    images: [],
+    isActive: true,
+  };
+
+  const legacyTitles = ['Veg Snacks Platter', 'Non-Veg Snacks Platter'];
+  for (const t of legacyTitles) {
+    const existingLegacy = await prisma.package.findFirst({ where: { title: t } });
+    if (existingLegacy) {
+      await prisma.package.update({ where: { id: existingLegacy.id }, data: { isActive: false } });
+    }
+  }
+
+  const existing = await prisma.package.findFirst({ where: { title } });
+  if (existing) {
+    await prisma.package.update({ where: { id: existing.id }, data: baseData });
+    return;
+  }
+  await prisma.package.create({ data: baseData });
+}
+
+void ensureSnacksPlatterPackage().catch(() => null);
 
 const orderStore = new Map();
 
@@ -396,13 +429,42 @@ function isWeekend(date) {
   return day === 0 || day === 6;
 }
 
-function computeQuote({ pkg, pax, distanceKm, eventDate, addons = [], pricing = null }) {
+function computeCateringBulkDiscountPct(packs) {
+  const p = Math.max(0, Math.round(Number(packs ?? 0)));
+  if (p >= 200) return 15;
+  return 0;
+}
+
+function inferPackageMealType(pkg) {
+  const title = String(pkg?.title ?? '').toLowerCase();
+  if (title.includes('snacks') || title.includes('snack')) return 'snacks';
+  if (title.includes('breakfast')) return 'breakfast';
+  if (title.includes('dinner')) return 'lunch';
+  if (title.includes('lunch')) return 'lunch';
+  return 'lunch';
+}
+
+function normalizeSelectionMealType(raw) {
+  const s = String(raw ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_')
+    .replace(/-/g, '_');
+  if (!s) return '';
+  if (s === 'dinner') return 'lunch';
+  if (s === 'breakfast' || s === 'lunch' || s === 'snacks') return s;
+  return s;
+}
+
+function computeQuote({ pkg, pax, distanceKm, eventDate, addons = [], pricing = null, bulkDiscountPct = 0 }) {
   const breakdown = [];
   let subtotal = 0;
+  let perPlatePaise = null;
 
   const pricingMode = pricing && typeof pricing === 'object' ? String(pricing.mode ?? '') : '';
   if (pricingMode === 'per_plate') {
     const perPlate = Number(pricing?.perPlate ?? pkg.perPax ?? pkg.basePrice);
+    perPlatePaise = Number.isFinite(perPlate) ? Math.max(0, Math.round(perPlate)) : null;
     const base = Math.round(Math.max(0, pax) * perPlate);
     subtotal += base;
     breakdown.push({ label: `${pax} plates × ₹${Math.round(perPlate / 100)}`, amount: base });
@@ -427,6 +489,8 @@ function computeQuote({ pkg, pax, distanceKm, eventDate, addons = [], pricing = 
     }
   }
 
+  const foodCostBeforeDiscount = subtotal;
+
   const dist = Math.max(0, Number(distanceKm ?? 0));
   if (PER_KM_FEE > 0 && dist > FREE_KM) {
     const fee = Math.round((dist - FREE_KM) * PER_KM_FEE);
@@ -440,11 +504,31 @@ function computeQuote({ pkg, pax, distanceKm, eventDate, addons = [], pricing = 
     breakdown.push({ label: `Weekend surge ${WEEKEND_SURGE_PCT}%`, amount: surge });
   }
 
+  const subtotalBeforeDiscount = subtotal;
+  const pct = Math.max(0, Math.round(Number(bulkDiscountPct ?? 0)));
+  const bulkDiscountAmount = pct > 0 ? Math.max(0, Math.round((foodCostBeforeDiscount * pct) / 100)) : 0;
+  if (bulkDiscountAmount > 0) {
+    subtotal = Math.max(0, subtotal - bulkDiscountAmount);
+    breakdown.push({ label: `Bulk Order Discount (${pct}%)`, amount: -bulkDiscountAmount });
+  }
+
   const gst = Math.round(subtotal * GST_RATE);
   const total = subtotal + gst;
   breakdown.push({ label: `GST ${Math.round(GST_RATE * 100)}%`, amount: gst });
 
-  return { subtotal, gst, total, breakdown };
+  return {
+    subtotal,
+    gst,
+    total,
+    breakdown,
+    meta: {
+      subtotalBeforeDiscount,
+      bulkDiscountPct: bulkDiscountAmount > 0 ? pct : 0,
+      bulkDiscountAmount,
+      subtotalAfterDiscount: subtotal,
+      perPlatePaise,
+    },
+  };
 }
 
 function computeBowlTotals({ bowlPricePerUnit, qty, addOns, deliveryFee }) {
@@ -946,7 +1030,8 @@ app.get('/api/catalog/packages', async (_req, res) => {
   try {
     const db = requireDb(res);
     if (!db) return;
-    const items = await db.package.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } });
+    const itemsRaw = await db.package.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } });
+    const items = itemsRaw.map((p) => ({ ...p, mealType: inferPackageMealType(p) }));
     return res.json({ items });
   } catch (e) {
     return res.status(500).json({ error: 'Server error', details: String(e) });
@@ -977,9 +1062,178 @@ app.post('/api/quotes/instant', async (req, res) => {
     let usePerPlatePricing = false;
     let premiumPerPlate = 0;
     let premiumCount = 0;
+    let cateringBulkDiscountPct = 0;
     if (selection && typeof selection === 'object') {
       const kind = String(selection?.kind ?? '').trim();
       const items = Array.isArray(selection?.items) ? selection.items : [];
+      if (kind === 'catering') {
+        const selectionMealType = normalizeSelectionMealType(selection?.mealType);
+        if (selectionMealType) {
+          const pkgMealType = inferPackageMealType(pkg);
+          if (pkgMealType !== selectionMealType) {
+            return res.status(400).json({
+              error: 'Package does not match mealType',
+              details: `Expected ${selectionMealType} package, got ${pkgMealType}`,
+            });
+          }
+        }
+
+        usePerPlatePricing = true;
+        cateringBulkDiscountPct = computeCateringBulkDiscountPct(pax);
+
+        const EXTRA_PAISE_BY_CATEGORY_LUNCH = {
+          starter: 2500,
+          curry: 3000,
+          rice: 2000,
+          biryani_pulav: 4000,
+          bread: 1000,
+          dessert: 1500,
+        };
+
+        const INCLUDED_BASE_BY_CATEGORY_BREAKFAST = {
+          main_breakfast: 2,
+          accompaniments: 4,
+          beverages: 2,
+          sweets_fruits: 2,
+        };
+
+        const EXTRA_PAISE_BY_CATEGORY_BREAKFAST = {
+          main_breakfast: 2500,
+          accompaniments: 1000,
+          beverages: 1500,
+          sweets_fruits: 2000,
+        };
+
+        const INCLUDED_BASE_BY_CATEGORY_SNACKS = {
+          snacks: 1,
+          chutneys_dips: 1,
+          snacks_beverages: 1,
+        };
+
+        const EXTRA_PAISE_BY_CATEGORY_SNACKS = {
+          chutneys_dips: 2000,
+          snacks_beverages: 2000,
+        };
+
+        const toCourse = (id) => {
+          const s = String(id ?? '');
+          if (s.startsWith('fried_snacks-')) return 'snacks';
+          if (s.startsWith('steamed_baked-')) return 'snacks';
+          if (s.startsWith('nonveg_snacks-')) return 'snacks';
+          if (s.startsWith('veg_snacks-')) return 'snacks';
+          if (s.startsWith('chutneys-')) return 'chutneys_dips';
+          if (s.startsWith('dips-')) return 'chutneys_dips';
+          if (s.startsWith('snacks_beverages-')) return 'snacks_beverages';
+          if (s.startsWith('main_breakfast-')) return 'main_breakfast';
+          if (s.startsWith('accompaniments-')) return 'accompaniments';
+          if (s.startsWith('beverages-')) return 'beverages';
+          if (s.startsWith('sweets_fruits-')) return 'sweets_fruits';
+          if (s.startsWith('starter-')) return 'starter';
+          if (s.startsWith('curry-')) return 'curry';
+          if (s.startsWith('bread-')) return 'bread';
+          if (s.startsWith('rice-')) return 'rice';
+          if (s.startsWith('biryani-')) return 'biryani_pulav';
+          if (s.startsWith('dessert-')) return 'dessert';
+          return '';
+        };
+
+        const chosen = items
+          .map((x) => ({
+            id: String(x?.id ?? ''),
+            count: Math.max(0, Math.round(Number(x?.count ?? 0))),
+            addedAt: Number(x?.addedAt ?? 0),
+          }))
+          .filter((x) => x.id && x.count > 0);
+
+        const byId = new Map();
+        for (const it of chosen) {
+          const prev = byId.get(it.id);
+          if (!prev) {
+            byId.set(it.id, it);
+            continue;
+          }
+          const prevAdded = Number(prev.addedAt ?? 0);
+          const nextAdded = Number(it.addedAt ?? 0);
+          if (Number.isFinite(nextAdded) && (!Number.isFinite(prevAdded) || nextAdded < prevAdded)) {
+            byId.set(it.id, it);
+          }
+        }
+        const uniqueChosen = Array.from(byId.values());
+
+        const sortByAddedAt = (a, b) => {
+          const da = Number.isFinite(Number(a?.addedAt ?? 0)) ? Number(a.addedAt) : 0;
+          const db = Number.isFinite(Number(b?.addedAt ?? 0)) ? Number(b.addedAt) : 0;
+          if (da !== db) return da - db;
+          return String(a?.id ?? '').localeCompare(String(b?.id ?? ''));
+        };
+
+        let extraPerPlatePaise = 0;
+
+        if (selectionMealType === 'breakfast') {
+          const cats = ['main_breakfast', 'accompaniments', 'beverages', 'sweets_fruits'];
+          for (const cat of cats) {
+            const list = uniqueChosen.filter((x) => toCourse(x.id) === cat);
+            const included = Math.max(0, Math.round(Number(INCLUDED_BASE_BY_CATEGORY_BREAKFAST[cat] ?? 0)));
+            if (list.length <= included) continue;
+            const price = Math.max(0, Math.round(Number(EXTRA_PAISE_BY_CATEGORY_BREAKFAST[cat] ?? 0)));
+            if (price <= 0) continue;
+            extraPerPlatePaise += (list.length - included) * price;
+          }
+        } else if (selectionMealType === 'snacks') {
+          const snacks = uniqueChosen.filter((x) => toCourse(x.id) === 'snacks');
+          const includedSnacks = Math.max(0, Math.round(Number(INCLUDED_BASE_BY_CATEGORY_SNACKS.snacks ?? 0)));
+          if (snacks.length > includedSnacks) {
+            snacks.sort(sortByAddedAt);
+            for (let i = includedSnacks; i < snacks.length; i++) {
+              const id = String(snacks[i]?.id ?? '');
+              const isNonVeg = id.startsWith('nonveg_snacks-');
+              extraPerPlatePaise += isNonVeg ? 5000 : 3000;
+            }
+          }
+
+          const dips = uniqueChosen.filter((x) => toCourse(x.id) === 'chutneys_dips');
+          const includedDips = Math.max(0, Math.round(Number(INCLUDED_BASE_BY_CATEGORY_SNACKS.chutneys_dips ?? 0)));
+          const dipPrice = Math.max(0, Math.round(Number(EXTRA_PAISE_BY_CATEGORY_SNACKS.chutneys_dips ?? 0)));
+          if (dipPrice > 0 && dips.length > includedDips) {
+            extraPerPlatePaise += (dips.length - includedDips) * dipPrice;
+          }
+
+          const bevs = uniqueChosen.filter((x) => toCourse(x.id) === 'snacks_beverages');
+          const includedBev = Math.max(0, Math.round(Number(INCLUDED_BASE_BY_CATEGORY_SNACKS.snacks_beverages ?? 0)));
+          const bevPrice = Math.max(0, Math.round(Number(EXTRA_PAISE_BY_CATEGORY_SNACKS.snacks_beverages ?? 0)));
+          if (bevPrice > 0 && bevs.length > includedBev) {
+            extraPerPlatePaise += (bevs.length - includedBev) * bevPrice;
+          }
+        } else {
+          const starters = uniqueChosen.filter((x) => toCourse(x.id) === 'starter');
+          const curries = uniqueChosen.filter((x) => toCourse(x.id) === 'curry');
+          const breads = uniqueChosen.filter((x) => toCourse(x.id) === 'bread');
+          const desserts = uniqueChosen.filter((x) => toCourse(x.id) === 'dessert');
+          const riceOrBiryani = uniqueChosen.filter((x) => {
+            const c = toCourse(x.id);
+            return c === 'rice' || c === 'biryani_pulav';
+          });
+
+          if (starters.length > 1) extraPerPlatePaise += (starters.length - 1) * EXTRA_PAISE_BY_CATEGORY_LUNCH.starter;
+          if (curries.length > 1) extraPerPlatePaise += (curries.length - 1) * EXTRA_PAISE_BY_CATEGORY_LUNCH.curry;
+          if (breads.length > 1) extraPerPlatePaise += (breads.length - 1) * EXTRA_PAISE_BY_CATEGORY_LUNCH.bread;
+          if (desserts.length > 1) extraPerPlatePaise += (desserts.length - 1) * EXTRA_PAISE_BY_CATEGORY_LUNCH.dessert;
+
+          if (riceOrBiryani.length > 1) {
+            for (let i = 1; i < riceOrBiryani.length; i++) {
+              const c = toCourse(riceOrBiryani[i].id);
+              extraPerPlatePaise += Number(EXTRA_PAISE_BY_CATEGORY_LUNCH[c] ?? 0);
+            }
+          }
+        }
+
+        if (extraPerPlatePaise > 0) {
+          addons.push({
+            label: `Extra items +₹${Math.round(extraPerPlatePaise / 100)}/plate`,
+            amount: Math.round(extraPerPlatePaise * pax),
+          });
+        }
+      }
       if (kind === 'party_box' && items.length > 0) {
         usePerPlatePricing = true;
         const uniqueIds = new Set(items.map((x) => String(x)).filter(Boolean));
@@ -1000,17 +1254,22 @@ app.post('/api/quotes/instant', async (req, res) => {
       }
     }
 
-    const { subtotal, gst, total, breakdown } = computeQuote({
+    const q = computeQuote({
       pkg,
       pax,
       distanceKm,
       eventDate,
       addons,
-      pricing: usePerPlatePricing ? { mode: 'per_plate', perPlate: Number(pkg.perPax) } : null,
+      pricing: usePerPlatePricing ? { mode: 'per_plate', perPlate: Number(pkg.perPax ?? pkg.basePrice) } : null,
+      bulkDiscountPct: cateringBulkDiscountPct,
     });
+    const { subtotal, gst, total, breakdown, meta } = q;
     const expiresAt = new Date(Date.now() + 45 * 60 * 1000);
 
-    const breakdownJson = selection && typeof selection === 'object' ? { lines: breakdown, selection } : breakdown;
+    const breakdownJson =
+      selection && typeof selection === 'object'
+        ? { lines: breakdown, selection, meta: meta ?? null }
+        : { lines: breakdown, meta: meta ?? null };
 
     const quote = await db.quote.create({
       data: {
@@ -1096,7 +1355,16 @@ app.post('/api/bookings', authMiddleware, async (req, res) => {
     const userId = String(req.user?.sub ?? '').trim();
     if (!userId) return res.status(401).json({ error: 'Invalid auth token' });
 
-    const pct = Number.isFinite(ADVANCE_PERCENT) ? Math.max(1, Math.min(100, Math.round(ADVANCE_PERCENT))) : 30;
+    const selectionKind = (() => {
+      const b = quote?.breakdown;
+      if (!b || typeof b !== 'object') return '';
+      const sel = b?.selection;
+      if (!sel || typeof sel !== 'object') return '';
+      return String(sel.kind ?? '').trim();
+    })();
+
+    const pctRaw = selectionKind === 'catering' ? CATERING_ADVANCE_PERCENT : ADVANCE_PERCENT;
+    const pct = Number.isFinite(pctRaw) ? Math.max(1, Math.min(100, Math.round(pctRaw))) : 30;
     const advanceAmount = Math.max(1, Math.round((quote.total * pct) / 100));
 
     const existing = await db.booking.findUnique({ where: { quoteId } });
@@ -1279,6 +1547,9 @@ app.post('/api/razorpay/orders', async (req, res) => {
     const receipt = String(req.body?.receipt ?? `bb_${Date.now()}`);
     const notes = req.body?.notes ?? {};
 
+    const advancePctRaw = Number(req.body?.advancePct);
+    const advancePct = Number.isFinite(advancePctRaw) ? Math.max(1, Math.min(100, Math.round(advancePctRaw))) : null;
+
     const items = req.body?.items ?? null;
     const totalPaiseFromItems = calculateTotalPaiseFromItems(items);
 
@@ -1287,7 +1558,12 @@ app.post('/api/razorpay/orders', async (req, res) => {
       ? Math.round(amountRupeesFallback * 100)
       : null;
 
-    const amount = totalPaiseFromItems ?? amountPaiseFallback;
+    const fullAmount = totalPaiseFromItems ?? amountPaiseFallback;
+
+    const amount =
+      advancePct != null && fullAmount != null
+        ? Math.max(1, Math.round((fullAmount * advancePct) / 100))
+        : fullAmount;
 
     if (!amount || !Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({ error: 'Invalid amount. Provide items[] with price/quantity or amount (rupees).' });
@@ -1322,6 +1598,9 @@ app.post('/api/razorpay/orders', async (req, res) => {
       currency: data.currency,
       receipt: data.receipt,
       items: Array.isArray(items) ? items : null,
+      fullAmount: fullAmount != null ? fullAmount : null,
+      advancePct: advancePct,
+      notes: notes && typeof notes === 'object' ? notes : null,
       createdAt: nowTs(),
       updatedAt: nowTs(),
     });

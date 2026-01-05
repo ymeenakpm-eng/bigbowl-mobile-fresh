@@ -3,6 +3,9 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+import { setStoredItem } from '@/src/utils/storage';
+
 type GuestsRange = '10-15' | '15-25' | '25-50' | '50+';
 
 type FoodPref = 'veg' | 'non_veg' | 'mixed';
@@ -28,8 +31,8 @@ const Chip = ({
       paddingVertical: 10,
       borderRadius: 12,
       borderWidth: selected ? 2 : 1,
-      borderColor: selected ? '#7C3AED' : '#E5E7EB',
-      backgroundColor: selected ? '#F5F3FF' : '#FFFFFF',
+      borderColor: selected ? '#4C1D95' : '#E5E7EB',
+      backgroundColor: selected ? '#F4F1FA' : '#F6F3FB',
       marginRight: 10,
       marginBottom: 10,
     }}
@@ -86,30 +89,8 @@ export default function PartyBoxDetailsScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          marginBottom: 12,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            borderRadius: 16,
-            backgroundColor: '#F0F0F0',
-            marginRight: 8,
-          }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Party Details</Text>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Party Details" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Guests</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
@@ -209,6 +190,7 @@ export default function PartyBoxDetailsScreen() {
           disabled={!canContinue}
           onPress={() => {
             if (!guestsRange || !occasion) return;
+            void setStoredItem('bb_delivery_intent_v1', JSON.stringify({ kind: 'party_box', deliveryDateISO: selectedEventDateISO }));
             router.push(
               `/party-box/type?guests=${encodeURIComponent(guestsRange)}&occ=${encodeURIComponent(
                 occasion,

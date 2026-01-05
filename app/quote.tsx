@@ -12,6 +12,8 @@ import {
     View,
 } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useLocation } from '@/src/contexts/LocationContext';
 
@@ -156,6 +158,17 @@ export default function QuoteScreen() {
     return [];
   }, [quote?.breakdown]);
 
+  const meta = useMemo(() => {
+    const b: any = quote?.breakdown;
+    const m = b && typeof b === 'object' ? b?.meta : null;
+    return m && typeof m === 'object' ? m : null;
+  }, [quote?.breakdown]);
+
+  const perPlatePaise = useMemo(() => {
+    const n = Number(meta?.perPlatePaise);
+    return Number.isFinite(n) && n > 0 ? Math.max(0, Math.round(n)) : null;
+  }, [meta?.perPlatePaise]);
+
   async function createBookingAndPay() {
     try {
       if (!quote?.id) {
@@ -203,16 +216,9 @@ export default function QuoteScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#FFFFFF' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <BlackBackHeader title="Quote" />
+
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-          >
-            <Text style={{ fontSize: 12 }}>Back</Text>
-          </TouchableOpacity>
-          <Text style={{ fontSize: 24, fontWeight: '700' }}>Quote</Text>
-        </View>
 
         <Text style={{ color: '#666666', marginBottom: 16 }}>
           {loadingPkg ? 'Loading package...' : pkg ? pkg.title : 'Package not found'}
@@ -286,6 +292,7 @@ export default function QuoteScreen() {
         {quote ? (
           <View style={{ marginTop: 18, padding: 14, borderRadius: 12, backgroundColor: '#F7F7F7' }}>
             <Text style={{ fontWeight: '800', marginBottom: 8 }}>Quote</Text>
+            {perPlatePaise != null ? <Text style={{ color: '#333' }}>Price/plate: ₹{(perPlatePaise / 100).toFixed(0)}</Text> : null}
             <Text style={{ color: '#333' }}>Subtotal: ₹{(quote.subtotal / 100).toFixed(0)}</Text>
             <Text style={{ color: '#333' }}>GST: ₹{(quote.gst / 100).toFixed(0)}</Text>
             <Text style={{ color: '#333', fontWeight: '800', marginTop: 6 }}>Total: ₹{(quote.total / 100).toFixed(0)}</Text>
@@ -314,7 +321,7 @@ export default function QuoteScreen() {
                 {loadingBooking ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Book & Pay Advance</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Confirm & Pay Advance</Text>
                 )}
               </TouchableOpacity>
               {!isLoggedIn ? (

@@ -4,8 +4,9 @@ import {
     ActivityIndicator,
     Alert,
     KeyboardAvoidingView,
-    Linking,
+    Modal,
     Platform,
+    Pressable,
     ScrollView,
     Text,
     TextInput,
@@ -13,9 +14,10 @@ import {
     View,
 } from 'react-native';
 
-import { useAuth } from '@/src/contexts/AuthContext';
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 import { useLocation } from '@/src/contexts/LocationContext';
-import { apiJson } from '@/src/utils/api';
+import { apiJson, getApiBaseUrl } from '@/src/utils/api';
 
 type Params = {
   selection?: string;
@@ -31,6 +33,7 @@ type PackageItem = {
   basePrice: number;
   perPax: number;
   isVeg: boolean;
+  mealType?: string;
 };
 
 type QuoteResponse = {
@@ -42,6 +45,15 @@ type QuoteResponse = {
   expiresAt: string;
 };
 
+function inferPackageMealTypeClient(pkg: any) {
+  const title = String(pkg?.title ?? '').toLowerCase();
+  if (title.includes('snacks') || title.includes('snack')) return 'snacks';
+  if (title.includes('breakfast')) return 'breakfast';
+  if (title.includes('dinner')) return 'dinner';
+  if (title.includes('lunch')) return 'lunch';
+  return 'lunch';
+}
+
 function todayISO() {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -50,16 +62,9 @@ function todayISO() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function rupeesFromPaise(paise: any) {
-  const n = Number(paise);
-  if (!Number.isFinite(n)) return '0';
-  return String(Math.round(n / 100));
-}
-
-export default function CateringQuoteScreen() {
+ export default function CateringQuoteScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<Params>();
-  const auth = useAuth();
   const location = useLocation();
 
   const selectionRaw = String(params.selection ?? '').trim();
@@ -89,18 +94,50 @@ export default function CateringQuoteScreen() {
   const [loadingPkgs, setLoadingPkgs] = useState(true);
   const [packageId, setPackageId] = useState<string>('');
 
+  const selectionMealType = useMemo(() => {
+    const raw = String((selection as any)?.mealType ?? '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/-/g, '_');
+    if (!raw) return '';
+    if (raw === 'dinner') return 'lunch';
+    if (raw === 'snacks_veg' || raw === 'snacks_nonveg') return 'snacks';
+    if (raw === 'breakfast' || raw === 'lunch' || raw === 'dinner' || raw === 'snacks') return raw;
+    return raw;
+  }, [selection]);
+
+  const packagesForMealType = useMemo(() => {
+    if (!selectionMealType) return packages;
+    return packages.filter((p) => {
+      const fromServer = String((p as any)?.mealType ?? '').toLowerCase();
+      const mtRaw = fromServer ? fromServer : inferPackageMealTypeClient(p);
+      const mt = String(mtRaw ?? '').toLowerCase();
+      if (selectionMealType === 'snacks') return mt === 'snacks' || mt === 'snack';
+      return mt === selectionMealType;
+    });
+  }, [packages, selectionMealType]);
+
   const [customerName, setCustomerName] = useState('');
-  const [city, setCity] = useState(location.state.city);
+  const [apiBaseUrl, setApiBaseUrl] = useState<string>('');
+  const [city, setCity] = useState(String((location as any)?.state?.city ?? ''));
   const [distanceKm, setDistanceKm] = useState('0');
   const [pax, setPax] = useState(String(params.pax ?? '').trim() || '80');
   const [eventDate, setEventDate] = useState(String(params.eventDate ?? '').trim() || todayISO());
 
-  const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [loadingQuote, setLoadingQuote] = useState(false);
-  const [sentWhatsApp, setSentWhatsApp] = useState(false);
-  const [autoQuoteTriggered, setAutoQuoteTriggered] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
-  const isLoggedIn = Boolean(auth.state.token);
+  useEffect(() => {
+    (async () => {
+      try {
+        const v = await getApiBaseUrl();
+        setApiBaseUrl(v);
+      } catch {
+        setApiBaseUrl('');
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -109,22 +146,6 @@ export default function CateringQuoteScreen() {
         const data = await apiJson('/api/catalog/packages');
         const items = Array.isArray((data as any)?.items) ? ((data as any).items as PackageItem[]) : [];
         setPackages(items);
-
-        if (!packageId && items.length > 0) {
-          const mealType = String((selection as any)?.mealType ?? '').toLowerCase();
-          const preferBreakfast = mealType.includes('breakfast');
-          const preferBiryani = mealType.includes('lunch') || mealType.includes('dinner') || mealType.includes('snacks');
-
-          const byTitle = (needle: string) =>
-            items.find((p) => String(p.title ?? '').toLowerCase().includes(needle.toLowerCase())) ?? null;
-
-          const guess =
-            (preferBreakfast ? byTitle('breakfast') : null) ??
-            (preferBiryani ? byTitle('biryani') : null) ??
-            items[0];
-
-          setPackageId(String(guess?.id ?? items[0].id));
-        }
       } catch {
         setPackages([]);
       } finally {
@@ -133,13 +154,21 @@ export default function CateringQuoteScreen() {
     })();
   }, []);
 
-  const breakdownLines = useMemo(() => {
-    const b: any = quote?.breakdown;
-    if (!b) return [];
-    if (Array.isArray(b)) return b;
-    if (Array.isArray(b?.lines)) return b.lines;
-    return [];
-  }, [quote?.breakdown]);
+  useEffect(() => {
+    if (packageId) {
+      const chosen = packagesForMealType.find((p) => String(p.id) === String(packageId));
+      if (chosen) return;
+    }
+
+    if (packagesForMealType.length > 0) {
+      setPackageId(String(packagesForMealType[0].id));
+      return;
+    }
+
+    if (!selectionMealType && packages.length > 0) {
+      setPackageId(String(packages[0].id));
+    }
+  }, [packageId, packages, packagesForMealType, selectionMealType]);
 
   const canQuote = useMemo(() => {
     const paxN = Number(pax);
@@ -157,8 +186,6 @@ export default function CateringQuoteScreen() {
   async function createQuote() {
     try {
       setLoadingQuote(true);
-      setQuote(null);
-      setSentWhatsApp(false);
 
       const payload = {
         packageId,
@@ -174,75 +201,27 @@ export default function CateringQuoteScreen() {
         body: JSON.stringify(payload),
       });
 
-      setQuote(data as QuoteResponse);
+      const q = data as QuoteResponse;
+      const quoteId = String((q as any)?.id ?? '').trim();
+      if (!quoteId) {
+        throw new Error('Server did not return quote id');
+      }
+
+      if (!customerName.trim()) {
+        Alert.alert('Missing name', 'Please enter customer name.');
+        return;
+      }
+
+      router.push({
+        pathname: '/catering-quote-preview',
+        params: { quoteId, customerName: customerName.trim() },
+      } as any);
     } catch (e: any) {
       Alert.alert('Quote failed', String(e?.message ?? e));
     } finally {
       setLoadingQuote(false);
     }
   }
-
-  useEffect(() => {
-    (async () => {
-      if (autoQuoteTriggered) return;
-      if (loadingPkgs) return;
-      if (!canQuote) return;
-      setAutoQuoteTriggered(true);
-      await createQuote();
-    })();
-  }, [autoQuoteTriggered, canQuote, loadingPkgs]);
-
-  const whatsappMessage = useMemo(() => {
-    if (!quote) return '';
-
-    const lines: string[] = [];
-    lines.push(`Catering Quote`);
-    lines.push(`Customer: ${customerName.trim()}`);
-    lines.push(`City: ${city.trim()}`);
-    lines.push(`Event date: ${eventDate.trim()}`);
-    lines.push(`Pax: ${String(pax).trim()}`);
-    lines.push(`Distance: ${String(distanceKm).trim()} km`);
-    lines.push('');
-
-    lines.push('Items:');
-    for (const it of selectedItems) {
-      lines.push(`- ${it.name} × ${it.count}`);
-      if (it.accompaniments?.length) {
-        lines.push(`  Accompaniments: ${it.accompaniments.join(', ')}`);
-      }
-    }
-
-    lines.push('');
-    lines.push('Breakdown:');
-    for (const b of breakdownLines) {
-      lines.push(`- ${String(b?.label ?? '')}: ₹${rupeesFromPaise(b?.amount)}`);
-    }
-
-    lines.push('');
-    lines.push(`Total: ₹${rupeesFromPaise(quote.total)}`);
-
-    return lines.join('\n');
-  }, [breakdownLines, city, customerName, distanceKm, eventDate, pax, quote, selectedItems]);
-
-  useEffect(() => {
-    (async () => {
-      if (!quote?.id) return;
-      if (sentWhatsApp) return;
-      if (!customerName.trim()) return;
-      if (!whatsappMessage) return;
-
-      try {
-        const url = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
-        const can = await Linking.canOpenURL(url);
-        if (can) {
-          await Linking.openURL(url);
-          setSentWhatsApp(true);
-        }
-      } catch {
-        // ignore
-      }
-    })();
-  }, [quote?.id, sentWhatsApp, whatsappMessage]);
 
   const presetForModify = useMemo(() => {
     const selected: Record<string, any> = {};
@@ -265,16 +244,45 @@ export default function CateringQuoteScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#FFFFFF' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
+      <BlackBackHeader title="Catering Quote" />
+
+      <Modal
+        visible={howItWorksOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setHowItWorksOpen(false)}
+      >
+        <Pressable
+          onPress={() => setHowItWorksOpen(false)}
+          style={{ flex: 1, backgroundColor: 'rgba(17,24,39,0.55)', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+        >
+          <Pressable
+            onPress={() => null}
+            style={{ width: '100%', maxWidth: 360, borderRadius: 18, paddingVertical: 18, paddingHorizontal: 16, backgroundColor: '#FFFFFF' }}
           >
-            <Text style={{ fontSize: 12 }}>Back</Text>
-          </TouchableOpacity>
-          <Text style={{ fontSize: 22, fontWeight: '800' }}>Catering Quote</Text>
-        </View>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: '#111827', marginBottom: 10 }}>How It Works</Text>
+            <Text style={{ color: '#374151', marginBottom: 8 }}>1. Select platters and choose quantities.</Text>
+            <Text style={{ color: '#374151', marginBottom: 8 }}>2. Bulk discount applies automatically based on pax:</Text>
+            <Text style={{ color: '#6B7280', marginBottom: 6, marginLeft: 10 }}>- 50–100 pax: 5%</Text>
+            <Text style={{ color: '#6B7280', marginBottom: 6, marginLeft: 10 }}>- 101–200 pax: 10%</Text>
+            <Text style={{ color: '#6B7280', marginBottom: 8, marginLeft: 10 }}>- 200+ pax: 15%</Text>
+            <Text style={{ color: '#374151', marginBottom: 8 }}>3. View the Quote Summary (discount, GST, total, advance, balance).</Text>
+            <Text style={{ color: '#374151', marginBottom: 8 }}>4. Confirm your booking by paying 50% advance.</Text>
+            <Text style={{ color: '#374151', marginBottom: 8 }}>5. After payment, you can share the invoice on WhatsApp or download PDF.</Text>
+            <Text style={{ color: '#374151' }}>6. Pay the remaining balance as per delivery/service.</Text>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setHowItWorksOpen(false)}
+              style={{ marginTop: 14, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: '#111827' }}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '900' }}>Got it</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
 
         {selectedItems.length === 0 ? (
           <Text style={{ color: '#B91C1C', marginBottom: 12 }}>No catering items found. Please go back and add items.</Text>
@@ -352,105 +360,74 @@ export default function CateringQuoteScreen() {
           style={{ borderWidth: 1, borderColor: '#ddd', borderRadius: 10, padding: 12, marginBottom: 12 }}
         />
 
-        <Text style={{ fontSize: 12, color: '#333', marginBottom: 6 }}>Package</Text>
-        {loadingPkgs ? (
-          <View style={{ paddingVertical: 10 }}>
-            <ActivityIndicator />
-          </View>
-        ) : packages.length === 0 ? (
-          <Text style={{ color: '#B91C1C', marginBottom: 12 }}>No packages available.</Text>
-        ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 }}>
-            {packages.map((p) => {
-              const selected = packageId === p.id;
-              return (
-                <TouchableOpacity
-                  key={p.id}
-                  onPress={() => setPackageId(p.id)}
-                  activeOpacity={0.9}
-                  style={{
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    borderRadius: 999,
-                    borderWidth: selected ? 2 : 1,
-                    borderColor: selected ? '#4C1D95' : '#E5E7EB',
-                    backgroundColor: selected ? '#F5F3FF' : '#FFFFFF',
-                    marginRight: 8,
-                    marginBottom: 8,
-                  }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: '#111827' }}>{p.title}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-
         <TouchableOpacity
-          onPress={createQuote}
-          disabled={!canQuote || loadingQuote}
+          onPress={() => {
+            if (!customerName.trim()) {
+              Alert.alert('Missing name', 'Please enter customer name.');
+              return;
+            }
+            if (loadingPkgs) {
+              Alert.alert('Please wait', 'Loading quote details...');
+              return;
+            }
+            if (!selection) {
+              Alert.alert('Unable to quote', 'Missing selection. Please go back and try again.');
+              return;
+            }
+            if (selectedItems.length === 0) {
+              Alert.alert('Select items', 'Please add at least 1 item to create a quote.');
+              return;
+            }
+            if (!String(city ?? '').trim()) {
+              Alert.alert('Missing city', 'Please enter city.');
+              return;
+            }
+            if (!String(eventDate ?? '').trim()) {
+              Alert.alert('Missing date', 'Please enter event date.');
+              return;
+            }
+            const paxN = Number(pax);
+            if (!Number.isFinite(paxN) || paxN <= 0) {
+              Alert.alert('Invalid pax', 'Please enter a valid pax value.');
+              return;
+            }
+            const distN = Number(distanceKm);
+            if (!Number.isFinite(distN) || distN < 0) {
+              Alert.alert('Invalid distance', 'Please enter a valid distance value.');
+              return;
+            }
+            if (!packageId) {
+              const pkgLines = packages
+                .slice(0, 8)
+                .map((p) => {
+                  const mt = String((p as any)?.mealType ?? inferPackageMealTypeClient(p));
+                  return `${String(p.title ?? '')} [${mt}]`;
+                })
+                .join('\n');
+
+              Alert.alert(
+                'Unable to quote',
+                `No package found for ${selectionMealType || 'this selection'}.
+API: ${apiBaseUrl || '(unknown)'}
+Loaded: ${packages.length}, Matching: ${packagesForMealType.length}
+Top packages:\n${pkgLines || '(none)'}`,
+              );
+              return;
+            }
+            createQuote();
+          }}
+          disabled={loadingQuote}
           activeOpacity={0.9}
           style={{
-            backgroundColor: canQuote ? '#3366FF' : '#AAB',
+            backgroundColor: loadingQuote ? '#AAB' : '#3366FF',
             paddingVertical: 12,
             borderRadius: 14,
             alignItems: 'center',
             marginTop: 6,
           }}
         >
-          {loadingQuote ? <ActivityIndicator color="#FFFFFF" /> : <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Create Quote</Text>}
+          {loadingQuote ? <ActivityIndicator color="#FFFFFF" /> : <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Quote</Text>}
         </TouchableOpacity>
-
-        {quote ? (
-          <View style={{ marginTop: 18, padding: 14, borderRadius: 12, backgroundColor: '#F7F7F7' }}>
-            <Text style={{ fontWeight: '800', marginBottom: 8 }}>Quote</Text>
-            <Text style={{ color: '#333' }}>Subtotal: ₹{rupeesFromPaise(quote.subtotal)}</Text>
-            <Text style={{ color: '#333' }}>GST: ₹{rupeesFromPaise(quote.gst)}</Text>
-            <Text style={{ color: '#333', fontWeight: '800', marginTop: 6 }}>Total: ₹{rupeesFromPaise(quote.total)}</Text>
-            <Text style={{ color: '#666', marginTop: 8 }}>Expires: {new Date(quote.expiresAt).toLocaleString()}</Text>
-
-            <View style={{ marginTop: 12 }}>
-              {breakdownLines?.map((b: any) => (
-                <View key={String(b.label)} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <Text style={{ color: '#333', flex: 1, paddingRight: 10 }}>{String(b.label)}</Text>
-                  <Text style={{ color: '#333' }}>₹{rupeesFromPaise(b.amount)}</Text>
-                </View>
-              ))}
-            </View>
-
-            {!isLoggedIn ? (
-              <TouchableOpacity
-                onPress={() => router.push('/(tabs)/account' as any)}
-                activeOpacity={0.8}
-                style={{ marginTop: 14 }}
-              >
-                <Text style={{ color: '#111827', fontWeight: '800' }}>Please login to continue</Text>
-              </TouchableOpacity>
-            ) : null}
-
-            <TouchableOpacity
-              onPress={async () => {
-                if (!customerName.trim()) {
-                  Alert.alert('Missing name', 'Please enter customer name.');
-                  return;
-                }
-                if (!whatsappMessage) return;
-                const url = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
-                await Linking.openURL(url);
-              }}
-              activeOpacity={0.9}
-              style={{
-                marginTop: 14,
-                backgroundColor: '#111827',
-                paddingVertical: 12,
-                borderRadius: 14,
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Send on WhatsApp</Text>
-            </TouchableOpacity>
-          </View>
-        ) : null}
       </ScrollView>
     </KeyboardAvoidingView>
   );

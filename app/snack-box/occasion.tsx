@@ -2,6 +2,8 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 type Occasion = 'Evening Snacks' | 'Office Meeting' | 'Kids Party' | 'Tea-time Combo';
 
 type PeopleRange = '1-2' | '3-5' | '6-10' | '10+';
@@ -42,17 +44,8 @@ export default function SnackBoxOccasionScreen() {
   const canContinue = useMemo(() => Boolean(occasion), [occasion]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 20, fontWeight: '700' }}>Snack Occasion</Text>
-      </View>
-
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Snack Occasion" />
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         <Text style={{ fontSize: 16, fontWeight: '700', marginBottom: 8 }}>Choose occasion</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>

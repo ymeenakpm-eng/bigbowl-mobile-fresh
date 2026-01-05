@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../../src/contexts/CartContext';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 import { apiJson } from '@/src/utils/api';
 
 type Params = {
@@ -203,19 +205,8 @@ export default function MealBoxListingScreen() {
   }, [budget, pref, remoteBoxes, spice, type]);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 }}>
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0', marginRight: 8 }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontSize: 20, fontWeight: '700' }}>Meal Boxes</Text>
-          {subtitle ? <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>{subtitle}</Text> : null}
-        </View>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Meal Boxes" subtitle={subtitle || null} />
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
         {loadError ? (

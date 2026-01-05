@@ -1,5 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+ 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
 
 import { useAuth } from '@/src/contexts/AuthContext';
 
@@ -103,9 +105,9 @@ export default function AccountScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#fff' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <BlackBackHeader title="Login / Register" subtitle="Verify OTP to continue" />
+
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
-        <Text style={{ fontSize: 24, fontWeight: '700', marginBottom: 8 }}>Account</Text>
-        <Text style={{ color: '#666', marginBottom: 16 }}>Test phone OTP login against your backend.</Text>
 
         <View style={{ marginBottom: 12 }}>
           <Text style={{ fontSize: 12, color: '#333', marginBottom: 6 }}>API Base URL</Text>

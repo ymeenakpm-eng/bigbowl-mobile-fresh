@@ -3,6 +3,8 @@ import React from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useCart } from '../../src/contexts/CartContext';
 
+import { BlackBackHeader } from '@/components/BlackBackHeader';
+
 export default function CartScreen() {
   const router = useRouter();
   const { state, updateQuantity, clearCart, getCartTotal } = useCart();
@@ -11,30 +13,8 @@ export default function CartScreen() {
   const total = getCartTotal();
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF', paddingTop: 56 }}>
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 16,
-          marginBottom: 12,
-        }}
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            paddingHorizontal: 10,
-            paddingVertical: 6,
-            borderRadius: 16,
-            backgroundColor: '#F0F0F0',
-            marginRight: 8,
-          }}
-        >
-          <Text style={{ fontSize: 12 }}>Back</Text>
-        </TouchableOpacity>
-        <Text style={{ fontSize: 22, fontWeight: '700' }}>Your Cart</Text>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+      <BlackBackHeader title="Your Cart" />
 
       {items.length === 0 ? (
         <View
