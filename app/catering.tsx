@@ -259,7 +259,10 @@ export default function CateringScreen() {
   const [overRecommendedCategory, setOverRecommendedCategory] = useState<PlannerCategoryKey | null>(null);
   const [pricingInfoOpen, setPricingInfoOpen] = useState(false);
   const [extraChargesOpen, setExtraChargesOpen] = useState(false);
-  const [extraChargesShownOnce, setExtraChargesShownOnce] = useState(false);
+
+  const [basePlateToastVisible, setBasePlateToastVisible] = useState(false);
+  const basePlateToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const prevBaseIncludedReachedRef = useRef(false);
 
   React.useEffect(() => {
     const raw = String(params.preset ?? '').trim();
@@ -585,13 +588,38 @@ export default function CateringScreen() {
   }, [effectiveMealType]);
 
   React.useEffect(() => {
-    if (step !== 4) return;
-    if (!baseIncludedReached) return;
-    if (effectiveMealType === 'snacks') return;
-    if (extraChargesShownOnce) return;
-    setExtraChargesShownOnce(true);
-    setExtraChargesOpen(true);
-  }, [baseIncludedReached, effectiveMealType, extraChargesShownOnce, step]);
+    if (step !== 4) {
+      prevBaseIncludedReachedRef.current = false;
+      if (basePlateToastTimerRef.current) {
+        clearTimeout(basePlateToastTimerRef.current);
+        basePlateToastTimerRef.current = null;
+      }
+      setBasePlateToastVisible(false);
+      return;
+    }
+
+    const prev = prevBaseIncludedReachedRef.current;
+    prevBaseIncludedReachedRef.current = Boolean(baseIncludedReached);
+
+    if (!prev && baseIncludedReached) {
+      if (basePlateToastTimerRef.current) {
+        clearTimeout(basePlateToastTimerRef.current);
+        basePlateToastTimerRef.current = null;
+      }
+      setBasePlateToastVisible(true);
+      basePlateToastTimerRef.current = setTimeout(() => {
+        setBasePlateToastVisible(false);
+        basePlateToastTimerRef.current = null;
+      }, 2500);
+    }
+
+    return () => {
+      if (basePlateToastTimerRef.current) {
+        clearTimeout(basePlateToastTimerRef.current);
+        basePlateToastTimerRef.current = null;
+      }
+    };
+  }, [baseIncludedReached, step]);
 
   React.useEffect(() => {
     setActiveVegFilter('veg');
@@ -931,11 +959,26 @@ export default function CateringScreen() {
           ) : null}
         </View>
 
-        {baseIncludedReached ? (
-          <Text style={{ color: '#6B7280', marginBottom: 10 }}>
-            Base plate completed. You may add extra items if required.
-          </Text>
-        ) : null}
+        <View style={{ height: basePlateToastVisible ? 44 : 0, marginBottom: basePlateToastVisible ? 10 : 0 }}>
+          {basePlateToastVisible ? (
+            <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0 }}>
+              <View
+                style={{
+                  borderRadius: 12,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                  backgroundColor: '#ECFDF5',
+                  borderWidth: 1,
+                  borderColor: '#A7F3D0',
+                }}
+              >
+                <Text style={{ color: '#065F46', fontWeight: '700', fontSize: 12, lineHeight: 16, textAlign: 'center' }}>
+                  {'Base plate completed.\nYou may add extra items or continue.'}
+                </Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
 
         <View
           style={{

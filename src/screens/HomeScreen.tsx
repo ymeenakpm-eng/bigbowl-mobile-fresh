@@ -1,4 +1,5 @@
 import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Animated, Dimensions, Image, Linking, Modal, Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -373,259 +374,276 @@ const HomeScreen = () => {
             borderRadius: 0,
             marginBottom: 12,
             backgroundColor: '#FFFFFF',
-            paddingTop: 10,
-            paddingHorizontal: 16,
+            paddingTop: 0,
+            paddingHorizontal: 0,
           }}
         >
-          <View style={{ width: '100%', backgroundColor: '#FFFFFF' }}>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 4 }}>
-              {[
-                {
-                  label: 'Catering',
-                  emoji: '🍽️',
-                  desc: 'Premium catering menus',
-                  guests: 'Guest 50+',
-                  advance: 'Order 2 days in advance\n📞 Call us to customize',
-                  onPress: () => router.push('/catering' as any),
-                },
-                {
-                  label: 'Party Box',
-                  emoji: '🎉',
-                  desc: 'Perfect for parties',
-                  guests: 'Guest 10+',
-                  advance: 'Order 1 day in advance\n📞 Call us to customize',
-                  onPress: () => router.push('/party-box/type' as any),
-                },
-                {
-                  label: 'Meal Box',
-                  emoji: '🍱',
-                  desc: 'Daily meals made easy',
-                  guests: 'Guests 25+',
-                  advance: 'Order 1 day in advance\n📞 Call us to customize',
-                  onPress: () => router.push('/meal-box/guided' as any),
-                },
-                {
-                  label: 'Snack Box',
-                  emoji: '🍟',
-                  desc: 'Quick snack bundles',
-                  guests: 'Guests 10+',
-                  advance: 'Order 1 day in advance.\n📞 Call us to customize',
-                  onPress: () => router.push('/snack-box/occasion' as any),
-                },
-              ].map((box) => (
-                <TouchableOpacity
-                  key={box.label}
-                  activeOpacity={0.9}
-                  onPress={box.onPress}
-                  style={{
-                    width: '48%',
-                    minHeight: 170,
-                    borderRadius: 16,
-                    marginBottom: 12,
-                    paddingHorizontal: 12,
-                    paddingVertical: 12,
-                    backgroundColor: '#4C1D95',
-                    borderWidth: 1,
-                    borderColor: 'rgba(255,255,255,0.18)',
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
-                  }}
-                >
-                  {/* Icon + text layout; special case for Call card */}
-                  <View
+          <LinearGradient
+            colors={['#F6F4FB', '#FFFFFF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={{ paddingTop: 20, paddingHorizontal: 16, paddingBottom: 24 }}
+          >
+            <View style={{ width: '100%' }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 4 }}>
+                {[
+                  {
+                    label: 'Catering',
+                    emoji: '🍽️',
+                    desc: 'Premium catering menus',
+                    guests: 'Guest 50+',
+                    advance: 'Order 2 days in advance\n📞 Call us to customize',
+                    onPress: () => router.push('/catering' as any),
+                  },
+                  {
+                    label: 'Party Box',
+                    emoji: '🎉',
+                    desc: 'Perfect for parties',
+                    guests: 'Guest 10+',
+                    advance: 'Order 1 day in advance\n📞 Call us to customize',
+                    onPress: () => router.push('/party-box/type' as any),
+                  },
+                  {
+                    label: 'Meal Box',
+                    emoji: '🍱',
+                    desc: 'Daily meals made easy',
+                    guests: 'Guests 25+',
+                    advance: 'Order 1 day in advance\n📞 Call us to customize',
+                    onPress: () => router.push('/meal-box/guided' as any),
+                  },
+                  {
+                    label: 'Snack Box',
+                    emoji: '🍟',
+                    desc: 'Quick snack bundles',
+                    guests: 'Guests 10+',
+                    advance: 'Order 1 day in advance.\n📞 Call us to customize',
+                    onPress: () => router.push('/snack-box/occasion' as any),
+                  },
+                ].map((box) => (
+                  <TouchableOpacity
+                    key={box.label}
+                    activeOpacity={0.9}
+                    onPress={box.onPress}
                     style={{
-                      width: 40,
-                      height: 40,
-                      borderRadius: 20,
-                      backgroundColor: box.label === 'Catering' || box.label === 'Party Box' ? '#4C1D95' : '#FBBF24',
+                      width: '47%',
+                      minHeight: 170,
+                      borderRadius: 14,
+                      marginBottom: 16,
+                      paddingHorizontal: 12,
+                      paddingVertical: 12,
+                      backgroundColor: '#4C1D95',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.18)',
+                      justifyContent: 'flex-start',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: 10,
+                      shadowColor: '#000000',
+                      shadowOpacity: 0.06,
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowRadius: 18,
+                      elevation: 6,
                     }}
                   >
-                    <Text style={{ fontSize: 20, color: box.label === 'Catering' || box.label === 'Party Box' ? '#FBBF24' : '#4B1F8A' }}>{box.emoji}</Text>
-                  </View>
-                  <Text style={{ color: '#F9FAFB', fontWeight: '900', fontSize: 13, textAlign: 'center', width: '100%' }}>
-                    {box.label}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    style={{ color: '#E5E7EB', fontWeight: '700', fontSize: 11, textAlign: 'center', width: '100%', marginTop: 4 }}
-                  >
-                    {(box as any).desc}
-                  </Text>
-                  <View style={{ width: '100%', marginTop: 8 }}>
-                    <Text numberOfLines={1} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', textAlign: 'center' }}>
-                      👥 {(box as any).guests}
+                    {/* Icon + text layout; special case for Call card */}
+                    <View
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 20,
+                        backgroundColor: box.label === 'Catering' || box.label === 'Party Box' ? '#4C1D95' : '#FBBF24',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 20, color: box.label === 'Catering' || box.label === 'Party Box' ? '#FBBF24' : '#4B1F8A' }}>{box.emoji}</Text>
+                    </View>
+                    <Text style={{ color: '#F9FAFB', fontWeight: '900', fontSize: 13, textAlign: 'center', width: '100%' }}>
+                      {box.label}
                     </Text>
-                    <Text numberOfLines={3} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', marginTop: 4, textAlign: 'center' }}>
-                      📅 {(box as any).advance}
+                    <Text
+                      numberOfLines={1}
+                      style={{ color: '#E5E7EB', fontWeight: '700', fontSize: 11, textAlign: 'center', width: '100%', marginTop: 4 }}
+                    >
+                      {(box as any).desc}
                     </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                    <View style={{ width: '100%', marginTop: 8 }}>
+                      <Text numberOfLines={1} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', textAlign: 'center' }}>
+                        👥 {(box as any).guests}
+                      </Text>
+                      <Text numberOfLines={3} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', marginTop: 4, textAlign: 'center' }}>
+                        📅 {(box as any).advance}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
-          </View>
 
-          {/* Two feature cards (How it works, Call) */}
-          <View
-            style={{
-              marginTop: 4,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-            }}
-          >
-            {[
-              {
-                title: 'How it works',
-                subtitle: 'See plans & pricing',
-                emoji: '📱',
-              },
-              {
-                title: 'Call & customise',
-                subtitle: 'Talk to our team',
-                emoji: '📞',
-              },
-            ].map((card, index) => {
-              const Container: any = TouchableOpacity;
+            {/* Two feature cards (How it works, Call) */}
+            <View
+              style={{
+                marginTop: 4,
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+              }}
+            >
+              {[
+                {
+                  title: 'How it works',
+                  subtitle: 'See plans & pricing',
+                  emoji: '📱',
+                },
+                {
+                  title: 'Call & customise',
+                  subtitle: 'Talk to our team',
+                  emoji: '📞',
+                },
+              ].map((card, index) => {
+                const Container: any = TouchableOpacity;
 
-              const containerProps = {
-                activeOpacity: 0.9,
-                onPress: async () => {
-                  if (card.title === 'How it works') {
-                    setHowItWorksOpen(true);
-                    howItWorksAnim.setValue(0);
-                    Animated.timing(howItWorksAnim, {
-                      toValue: 1,
-                      duration: 220,
-                      useNativeDriver: true,
-                    }).start();
-                    return;
-                  }
-
-                  if (card.title === 'Call & customise') {
-                    try {
-                      const phone = 'tel:+919999999999';
-                      const can = await Linking.canOpenURL(phone);
-                      if (!can) {
-                        Alert.alert('Call not available', 'This device cannot open the dialer.');
-                        return;
-                      }
-                      await Linking.openURL(phone);
-                      return;
-                    } catch (e: any) {
-                      Alert.alert('Call failed', String(e?.message ?? e));
+                const containerProps = {
+                  activeOpacity: 0.9,
+                  onPress: async () => {
+                    if (card.title === 'How it works') {
+                      setHowItWorksOpen(true);
+                      howItWorksAnim.setValue(0);
+                      Animated.timing(howItWorksAnim, {
+                        toValue: 1,
+                        duration: 220,
+                        useNativeDriver: true,
+                      }).start();
                       return;
                     }
-                  }
-                },
-              };
 
-              return (
-                <Container
-                  key={card.title}
-                  {...containerProps}
-                  style={{
-                    flex: 1,
-                    height: 90,
-                    borderRadius: 16,
-                    marginRight: index < 1 ? 10 : 0,
-                    backgroundColor: '#4C1D95',
-                    borderWidth: 1,
-                    borderColor: 'rgba(255,255,255,0.18)',
+                    if (card.title === 'Call & customise') {
+                      try {
+                        const phone = 'tel:+919999999999';
+                        const can = await Linking.canOpenURL(phone);
+                        if (!can) {
+                          Alert.alert('Call not available', 'This device cannot open the dialer.');
+                          return;
+                        }
+                        await Linking.openURL(phone);
+                        return;
+                      } catch (e: any) {
+                        Alert.alert('Call failed', String(e?.message ?? e));
+                        return;
+                      }
+                    }
+                  },
+                };
 
-                    paddingHorizontal: 8,
-                    paddingVertical: 6,
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
-                >
-                  {/* Icon + text layout; special case for Call card */}
-                  {card.title === 'Call & customise' ? (
-                    <>
-                      <View
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 17,
-                          backgroundColor: '#FBBF24',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: 2,
-                        }}
-                      >
-                        <Text style={{ fontSize: 18, color: '#4B1F8A' }}>{card.emoji}</Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            fontWeight: '700',
-                            color: '#F9FAFB',
-                            textAlign: 'center',
-                          }}
-                        >
-                          Call &
-                        </Text>
-                        <Text
-                          style={{
-                            fontSize: 11,
-                            fontWeight: '500',
-                            color: '#F9FAFB',
-                            marginTop: 0,
-                            textAlign: 'center',
-                          }}
-                        >
-                          customise
-                        </Text>
+                return (
+                  <Container
+                    key={card.title}
+                    {...containerProps}
+                    style={{
+                      flex: 1,
+                      height: 90,
+                      borderRadius: 14,
+                      marginRight: index < 1 ? 10 : 0,
+                      backgroundColor: '#4C1D95',
+                      borderWidth: 1,
+                      borderColor: 'rgba(255,255,255,0.18)',
 
-                        <Text
+                      paddingHorizontal: 8,
+                      paddingVertical: 6,
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      shadowColor: '#000000',
+                      shadowOpacity: 0.06,
+                      shadowOffset: { width: 0, height: 6 },
+                      shadowRadius: 18,
+                      elevation: 6,
+                    }}
+                  >
+                    {/* Icon + text layout; special case for Call card */}
+                    {card.title === 'Call & customise' ? (
+                      <>
+                        <View
                           style={{
-                            fontSize: 10,
-                            color: '#E5E7EB',
-                            marginTop: 2,
-                            textAlign: 'center',
-                          }}
-                        >
-                          {card.subtitle}
-                        </Text>
-                      </View>
-                    </>
-                  ) : (
-                    <>
-                      <View
-                        style={{
-                          width: 34,
-                          height: 34,
-                          borderRadius: 17,
-                          backgroundColor: '#FBBF24',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          marginBottom: 6,
-                        }}
-                      >
-                        <Text style={{ fontSize: 18, color: '#4B1F8A' }}>{card.emoji}</Text>
-                      </View>
-                      <View>
-                        <Text
-                          style={{
-                            fontSize: 12,
-                            fontWeight: '700',
-                            color: '#F9FAFB',
+                            width: 34,
+                            height: 34,
+                            borderRadius: 17,
+                            backgroundColor: '#FBBF24',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             marginBottom: 2,
-                            textAlign: 'center',
                           }}
                         >
-                          {card.title}
-                        </Text>
-                        <Text style={{ fontSize: 10, color: '#E5E7EB', textAlign: 'center' }}>{card.subtitle}</Text>
-                      </View>
-                    </>
-                  )}
-                </Container>
-              );
-            })}
-          </View>
+                          <Text style={{ fontSize: 18, color: '#4B1F8A' }}>{card.emoji}</Text>
+                        </View>
+                        <View>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: '700',
+                              color: '#F9FAFB',
+                              textAlign: 'center',
+                            }}
+                          >
+                            Call &
+                          </Text>
+                          <Text
+                            style={{
+                              fontSize: 11,
+                              fontWeight: '500',
+                              color: '#F9FAFB',
+                              marginTop: 0,
+                              textAlign: 'center',
+                            }}
+                          >
+                            customise
+                          </Text>
+
+                          <Text
+                            style={{
+                              fontSize: 10,
+                              color: '#E5E7EB',
+                              marginTop: 2,
+                              textAlign: 'center',
+                            }}
+                          >
+                            {card.subtitle}
+                          </Text>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <View
+                          style={{
+                            width: 34,
+                            height: 34,
+                            borderRadius: 17,
+                            backgroundColor: '#FBBF24',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            marginBottom: 6,
+                          }}
+                        >
+                          <Text style={{ fontSize: 18, color: '#4B1F8A' }}>{card.emoji}</Text>
+                        </View>
+                        <View>
+                          <Text
+                            style={{
+                              fontSize: 12,
+                              fontWeight: '700',
+                              color: '#F9FAFB',
+                              marginBottom: 2,
+                              textAlign: 'center',
+                            }}
+                          >
+                            {card.title}
+                          </Text>
+                          <Text style={{ fontSize: 10, color: '#E5E7EB', textAlign: 'center' }}>{card.subtitle}</Text>
+                        </View>
+                      </>
+                    )}
+                  </Container>
+                );
+              })}
+            </View>
+          </LinearGradient>
 
           <View
             style={{
