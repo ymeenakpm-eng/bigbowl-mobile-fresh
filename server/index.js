@@ -69,32 +69,36 @@ const supabase = hasSupabaseConfig
 
 async function ensureSnacksPlatterPackage() {
   if (!prisma || !prisma.package) return;
-  const title = 'Snacks Platter';
-  const baseData = {
-    title,
-    cuisine: 'Snacks',
-    minPax: 50,
-    basePrice: 0,
-    perPax: 12900,
-    isVeg: true,
-    images: [],
-    isActive: true,
-  };
+  try {
+    const title = 'Snacks Platter';
+    const baseData = {
+      title,
+      cuisine: 'Snacks',
+      minPax: 50,
+      basePrice: 0,
+      perPax: 12900,
+      isVeg: true,
+      images: [],
+      isActive: true,
+    };
 
-  const legacyTitles = ['Veg Snacks Platter', 'Non-Veg Snacks Platter'];
-  for (const t of legacyTitles) {
-    const existingLegacy = await prisma.package.findFirst({ where: { title: t } });
-    if (existingLegacy) {
-      await prisma.package.update({ where: { id: existingLegacy.id }, data: { isActive: false } });
+    const legacyTitles = ['Veg Snacks Platter', 'Non-Veg Snacks Platter'];
+    for (const t of legacyTitles) {
+      const existingLegacy = await prisma.package.findFirst({ where: { title: t } });
+      if (existingLegacy) {
+        await prisma.package.update({ where: { id: existingLegacy.id }, data: { isActive: false } });
+      }
     }
-  }
 
-  const existing = await prisma.package.findFirst({ where: { title } });
-  if (existing) {
-    await prisma.package.update({ where: { id: existing.id }, data: baseData });
-    return;
+    const existing = await prisma.package.findFirst({ where: { title } });
+    if (existing) {
+      await prisma.package.update({ where: { id: existing.id }, data: baseData });
+      return;
+    }
+    await prisma.package.create({ data: baseData });
+  } catch (e) {
+    console.warn('Failed to ensure Snacks Platter package:', String(e?.message ?? e));
   }
-  await prisma.package.create({ data: baseData });
 }
 
 void ensureSnacksPlatterPackage().catch(() => null);
@@ -1030,6 +1034,7 @@ app.get('/api/catalog/packages', async (_req, res) => {
   try {
     const db = requireDb(res);
     if (!db) return;
+    await ensureSnacksPlatterPackage();
     const itemsRaw = await db.package.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } });
     const items = itemsRaw.map((p) => ({ ...p, mealType: inferPackageMealType(p) }));
     return res.json({ items });

@@ -587,10 +587,11 @@ export default function CateringScreen() {
   React.useEffect(() => {
     if (step !== 4) return;
     if (!baseIncludedReached) return;
+    if (effectiveMealType === 'snacks') return;
     if (extraChargesShownOnce) return;
     setExtraChargesShownOnce(true);
     setExtraChargesOpen(true);
-  }, [baseIncludedReached, extraChargesShownOnce, step]);
+  }, [baseIncludedReached, effectiveMealType, extraChargesShownOnce, step]);
 
   React.useEffect(() => {
     setActiveVegFilter('veg');
