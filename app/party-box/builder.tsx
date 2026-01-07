@@ -386,10 +386,13 @@ export default function PartyBoxBuilderScreen() {
               </View>
             ) : null}
 
-            <Text style={{ fontSize: 12, fontWeight: '900', color: '#7C2D12', marginBottom: 6 }}>
-              {activeSection} ({String(activeSelected?.length ?? 0)}/{String(activeRequired ?? 0)})
-            </Text>
-            <Text style={{ fontSize: 12, color: '#7C2D12', lineHeight: 18 }}>{pendingText}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+              {pendingSelections.map((p) => (
+                <View key={p.section} style={{ width: '48%', marginBottom: 6 }}>
+                  <Text style={{ fontSize: 12, color: '#7C2D12', lineHeight: 18 }}>{p.section}</Text>
+                </View>
+              ))}
+            </View>
           </View>
         </View>
       ) : null}

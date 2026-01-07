@@ -170,19 +170,6 @@ function todayISO() {
     }
   }, [packageId, packages, packagesForMealType, selectionMealType]);
 
-  const canQuote = useMemo(() => {
-    const paxN = Number(pax);
-    const distN = Number(distanceKm);
-    if (!packageId) return false;
-    if (!Number.isFinite(paxN) || paxN <= 0) return false;
-    if (!city.trim()) return false;
-    if (!eventDate.trim()) return false;
-    if (!Number.isFinite(distN) || distN < 0) return false;
-    if (!selection) return false;
-    if (selectedItems.length === 0) return false;
-    return true;
-  }, [city, distanceKm, eventDate, packageId, pax, selectedItems.length, selection]);
-
   async function createQuote() {
     try {
       setLoadingQuote(true);

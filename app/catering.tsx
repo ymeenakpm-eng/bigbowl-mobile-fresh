@@ -18,9 +18,6 @@ interface StepState {
 
 const dateOptions: { key: StepState['dateOption']; label: string }[] = [
   { key: 'date', label: 'Choose a date' },
-  { key: 'this_week', label: 'This week' },
-  { key: 'this_month', label: 'This month' },
-  { key: 'exploring', label: "I\'m just exploring" },
 ];
 
 const occasionOptions = [
@@ -45,14 +42,9 @@ const mealOptions: { key: CateringMealType; label: string }[] = [
   { key: 'snacks', label: 'Snacks' },
 ];
 
-const BREAKFAST_ACCOMPANIMENTS = [
-  'Tomato Chutney',
-  'Peanut Chutney',
-  'Pickle',
-  'Sambar',
-  'Allam Chutney',
-  'Extra accompaniments - Chicken curry',
-];
+const BREAKFAST_ACCOMPANIMENTS = cateringItems
+  .filter((x) => x.mealType === 'breakfast' && x.course === 'accompaniments' && x.vegType === 'veg')
+  .map((x) => x.name);
 
 type PlannerCategoryKey = CateringCourse | 'dessert';
 
@@ -174,20 +166,6 @@ type SelectedCateringItem = {
   addedAt?: number;
 };
 
-const SectionHeader = ({ title }: { title: string }) => (
-  <Text
-    style={{
-      fontSize: 18,
-      fontWeight: '700',
-      marginTop: 16,
-      marginBottom: 8,
-      color: '#111827',
-    }}
-  >
-    {title}
-  </Text>
-);
-
 const Chip = ({
   label,
   selected,
@@ -243,13 +221,14 @@ export default function CateringScreen() {
   const [state, setState] = useState<StepState>({});
   const [specificDate, setSpecificDate] = useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [specificTime, setSpecificTime] = useState<Date | null>(null);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   const [selectedItemsById, setSelectedItemsById] = useState<Record<string, SelectedCateringItem>>({});
   const [accompanimentsItem, setAccompanimentsItem] = useState<CateringItem | null>(null);
   const [tempAccompaniments, setTempAccompaniments] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<PlannerCategoryKey>('starter');
   const [activeVegFilter, setActiveVegFilter] = useState<'veg' | 'non-veg'>('veg');
   const [summaryExpanded, setSummaryExpanded] = useState(false);
-  const [pendingExtraItem, setPendingExtraItem] = useState<CateringItem | null>(null);
   const [imagePreviewItem, setImagePreviewItem] = useState<{ source: any; name: string; vegType: 'veg' | 'non-veg' } | null>(null);
   const categoriesScrollRef = useRef<any>(null);
   const [categoriesScrollX, setCategoriesScrollX] = useState(0);
@@ -258,11 +237,13 @@ export default function CateringScreen() {
   const [overRecommendedOpen, setOverRecommendedOpen] = useState(false);
   const [overRecommendedCategory, setOverRecommendedCategory] = useState<PlannerCategoryKey | null>(null);
   const [pricingInfoOpen, setPricingInfoOpen] = useState(false);
-  const [extraChargesOpen, setExtraChargesOpen] = useState(false);
 
   const [basePlateToastVisible, setBasePlateToastVisible] = useState(false);
   const basePlateToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevBaseIncludedReachedRef = useRef(false);
+
+  const [extraChargesToastVisible, setExtraChargesToastVisible] = useState(false);
+  const extraChargesToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     const raw = String(params.preset ?? '').trim();
@@ -511,11 +492,6 @@ export default function CateringScreen() {
     };
   }, [effectiveMealType, extraRupeesByCategory, includedBaseByCategory, selectedItemsById]);
 
-  const displayedPlateRupees = useMemo(() => {
-    const extra = Math.max(0, Math.round(Number(extraPricing.extraPerPlateRupees ?? 0)));
-    return basePlateRupees + extra;
-  }, [basePlateRupees, extraPricing.extraPerPlateRupees]);
-
   const snacksBaseCounts = useMemo(() => {
     if (effectiveMealType !== 'snacks') {
       return { snacks: 0, chutneys_dips: 0, snacks_beverages: 0 };
@@ -610,7 +586,7 @@ export default function CateringScreen() {
       basePlateToastTimerRef.current = setTimeout(() => {
         setBasePlateToastVisible(false);
         basePlateToastTimerRef.current = null;
-      }, 2500);
+      }, 3500);
     }
 
     return () => {
@@ -631,6 +607,13 @@ export default function CateringScreen() {
       setState((s) => ({ ...s, dateOption: 'date' }));
     }
     setShowDatePicker(false);
+  };
+
+  const handleTimeChange = (event: DateTimePickerEvent, date?: Date) => {
+    if (event.type === 'set' && date) {
+      setSpecificTime(date);
+    }
+    setShowTimePicker(false);
   };
 
   const toggleTempAccompaniment = (name: string) => {
@@ -656,9 +639,12 @@ export default function CateringScreen() {
         const included = Math.max(0, Math.round(Number(includedBaseByCategory[ckey] ?? 0)));
         const currentUniqueInThisCategory = Object.values(prev).filter((x) => x.item.course === ckey && x.count > 0).length;
         if (included > 0 && currentUniqueInThisCategory >= included) {
-          setPendingExtraItem(item);
-          setExtraChargesOpen(true);
-          return prev;
+          if (extraChargesToastTimerRef.current) clearTimeout(extraChargesToastTimerRef.current);
+          setExtraChargesToastVisible(true);
+          extraChargesToastTimerRef.current = setTimeout(() => {
+            setExtraChargesToastVisible(false);
+            extraChargesToastTimerRef.current = null;
+          }, 8000);
         }
 
         const next = { ...prev, [item.id]: { item, count: 1, accompaniments: cur?.accompaniments, addedAt: Date.now() } };
@@ -678,9 +664,12 @@ export default function CateringScreen() {
         const included = Math.max(0, Math.round(Number(includedBaseByCategory[ckey] ?? 0)));
         const currentUniqueInThisCategory = Object.values(prev).filter((x) => x.item.course === ckey && x.count > 0).length;
         if (included > 0 && currentUniqueInThisCategory >= included) {
-          setPendingExtraItem(item);
-          setExtraChargesOpen(true);
-          return prev;
+          if (extraChargesToastTimerRef.current) clearTimeout(extraChargesToastTimerRef.current);
+          setExtraChargesToastVisible(true);
+          extraChargesToastTimerRef.current = setTimeout(() => {
+            setExtraChargesToastVisible(false);
+            extraChargesToastTimerRef.current = null;
+          }, 8000);
         }
 
         const next = { ...prev, [item.id]: { item, count: 1, accompaniments: cur?.accompaniments, addedAt: Date.now() } };
@@ -717,9 +706,12 @@ export default function CateringScreen() {
         ((ckey === 'rice' || ckey === 'biryani_pulav') && currentRiceOrBiryani >= includedRiceOrBiryani);
 
       if (exceedsIncluded) {
-        setPendingExtraItem(item);
-        setExtraChargesOpen(true);
-        return prev;
+        if (extraChargesToastTimerRef.current) clearTimeout(extraChargesToastTimerRef.current);
+        setExtraChargesToastVisible(true);
+        extraChargesToastTimerRef.current = setTimeout(() => {
+          setExtraChargesToastVisible(false);
+          extraChargesToastTimerRef.current = null;
+        }, 8000);
       }
 
       const next = { ...prev, [item.id]: { item, count: 1, accompaniments: cur?.accompaniments, addedAt: Date.now() } };
@@ -735,6 +727,15 @@ export default function CateringScreen() {
       return next;
     });
   };
+
+  React.useEffect(() => {
+    return () => {
+      if (extraChargesToastTimerRef.current) {
+        clearTimeout(extraChargesToastTimerRef.current);
+        extraChargesToastTimerRef.current = null;
+      }
+    };
+  }, []);
 
   const handleRemoveItem = (item: CateringItem) => {
     setSelectedItemsById((prev) => {
@@ -758,9 +759,12 @@ export default function CateringScreen() {
       const included = Math.max(0, Math.round(Number(includedBaseByCategory[ckey] ?? 0)));
       const currentUniqueInThisCategory = Object.values(prev).filter((x) => x.item.course === ckey && x.count > 0).length;
       if (included > 0 && currentUniqueInThisCategory >= included) {
-        setPendingExtraItem(item);
-        setExtraChargesOpen(true);
-        return prev;
+        if (extraChargesToastTimerRef.current) clearTimeout(extraChargesToastTimerRef.current);
+        setExtraChargesToastVisible(true);
+        extraChargesToastTimerRef.current = setTimeout(() => {
+          setExtraChargesToastVisible(false);
+          extraChargesToastTimerRef.current = null;
+        }, 8000);
       }
 
       const next = { ...prev, [item.id]: { item, count: 1, accompaniments: acc, addedAt: Date.now() } };
@@ -791,69 +795,64 @@ export default function CateringScreen() {
           <Text style={{ fontSize: 22, fontWeight: '700', marginBottom: 4 }}>
             When are you planning?
           </Text>
-          <Text style={{ color: '#6B7280', marginBottom: 16 }}>Select event date</Text>
 
-          {dateOptions.map((opt) => {
-            if (opt.key === 'date') {
-              const selected = state.dateOption === 'date';
-              const dateLabel =
-                specificDate != null
-                  ? specificDate.toLocaleDateString()
-                  : opt.label;
-              return (
-                <TouchableOpacity
-                  key={opt.key}
-                  onPress={() => setShowDatePicker(true)}
-                  activeOpacity={0.9}
-                  style={{
-                    paddingHorizontal: 14,
-                    paddingVertical: 12,
-                    borderRadius: 12,
-                    borderWidth: selected ? 2 : 1,
-                    borderColor: selected ? '#4C1D95' : '#E5E7EB',
-                    backgroundColor: selected ? '#F4F1FA' : '#F6F3FB',
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: 15,
-                      fontWeight: selected ? '700' : '500',
-                      color: '#111827',
-                    }}
-                  >
-                    {dateLabel}
-                  </Text>
-                </TouchableOpacity>
-              );
-            }
+          <Text style={{ color: '#6B7280', marginBottom: 16 }}>Select event date and time</Text>
 
-            const dateChosen = state.dateOption === 'date';
-            const disabled = dateChosen;
+          <TouchableOpacity
+            onPress={() => setShowDatePicker(true)}
+            activeOpacity={0.9}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              borderRadius: 12,
+              borderWidth: specificDate != null ? 2 : 1,
+              borderColor: specificDate != null ? '#4C1D95' : '#E5E7EB',
+              backgroundColor: specificDate != null ? '#F4F1FA' : '#F6F3FB',
+              marginBottom: 10,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: specificDate != null ? '700' : '500', color: '#111827' }}>
+              {specificDate != null ? specificDate.toLocaleDateString() : (dateOptions[0]?.label ?? 'Choose a date')}
+            </Text>
+          </TouchableOpacity>
 
-            return (
-              <Chip
-                key={opt.key}
-                label={opt.label}
-                selected={state.dateOption === opt.key}
-                onPress={
-                  disabled
-                    ? () => {}
-                    : () => setState((s) => ({ ...s, dateOption: opt.key }))
-                }
-              />
-            );
-          })}
+          <TouchableOpacity
+            onPress={() => setShowTimePicker(true)}
+            activeOpacity={0.9}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              borderRadius: 12,
+              borderWidth: specificTime != null ? 2 : 1,
+              borderColor: specificTime != null ? '#4C1D95' : '#E5E7EB',
+              backgroundColor: specificTime != null ? '#F4F1FA' : '#F6F3FB',
+              marginBottom: 10,
+            }}
+          >
+            <Text style={{ fontSize: 15, fontWeight: specificTime != null ? '700' : '500', color: '#111827' }}>
+              {specificTime != null
+                ? specificTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                : 'Choose a time'}
+            </Text>
+          </TouchableOpacity>
 
           {showDatePicker && (
             <DateTimePicker
               mode="date"
               value={specificDate ?? new Date()}
               onChange={handleDateChange}
+              minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
+            />
+          )}
+
+          {showTimePicker && (
+            <DateTimePicker
+              mode="time"
+              value={specificTime ?? new Date()}
+              onChange={handleTimeChange}
             />
           )}
         </View>
-
       );
     }
 
@@ -959,8 +958,8 @@ export default function CateringScreen() {
           ) : null}
         </View>
 
-        <View style={{ height: basePlateToastVisible ? 44 : 0, marginBottom: basePlateToastVisible ? 10 : 0 }}>
-          {basePlateToastVisible ? (
+        <View style={{ height: basePlateToastVisible || extraChargesToastVisible ? 44 : 0, marginBottom: basePlateToastVisible || extraChargesToastVisible ? 10 : 0 }}>
+          {basePlateToastVisible || extraChargesToastVisible ? (
             <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, top: 0 }}>
               <View
                 style={{
@@ -973,7 +972,9 @@ export default function CateringScreen() {
                 }}
               >
                 <Text style={{ color: '#065F46', fontWeight: '700', fontSize: 12, lineHeight: 16, textAlign: 'center' }}>
-                  {'Base plate completed.\nYou may add extra items or continue.'}
+                  {basePlateToastVisible
+                    ? 'Base plate completed.\nYou may add extra items or continue.'
+                    : 'Extra item added.\nAdditional charges may apply.'}
                 </Text>
               </View>
             </View>
@@ -1086,7 +1087,7 @@ export default function CateringScreen() {
 
         <FlatList
           data={activeCategory === 'dessert' ? [] : visibleActiveCategoryItems}
-          numColumns={3}
+          numColumns={2}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           extraData={selectedItemsById}
@@ -1178,7 +1179,7 @@ export default function CateringScreen() {
             return (
               <View
                 style={{
-                  width: '32%',
+                  width: '48%',
                   marginBottom: 10,
                   backgroundColor: '#F6F3FB',
                   borderRadius: 16,
@@ -1259,7 +1260,7 @@ export default function CateringScreen() {
   };
 
   const canGoNext = () => {
-    if (step === 0) return !!state.dateOption;
+    if (step === 0) return specificDate != null && specificTime != null;
     if (step === 1) return !!state.occasion;
     if (step === 2) return !!state.guestsRange;
     if (step === 3) return !!state.mealType;
@@ -1319,10 +1320,10 @@ export default function CateringScreen() {
     };
 
     const baseDate = (() => {
-      if (state.dateOption === 'date' && specificDate) return specificDate;
-      const d = new Date();
-      if (state.dateOption === 'this_week') d.setDate(d.getDate() + 7);
-      if (state.dateOption === 'this_month') d.setDate(d.getDate() + 30);
+      const d = specificDate ? new Date(specificDate) : new Date();
+      if (specificTime) {
+        d.setHours(specificTime.getHours(), specificTime.getMinutes(), 0, 0);
+      }
       return d;
     })();
 
@@ -1333,6 +1334,7 @@ export default function CateringScreen() {
       occasion: state.occasion ?? '',
       guestsRange: state.guestsRange ?? '',
       mealType: (effectiveMealType ?? state.mealType ?? '') as any,
+      time: specificTime ? specificTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
       items: Object.values(selectedItemsById)
         .map((x) => ({
           id: x.item.id,
@@ -1404,12 +1406,34 @@ export default function CateringScreen() {
           borderTopWidth: 1,
           borderTopColor: '#E5E7EB',
           backgroundColor: '#FFFFFF',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
         }}
       >
+        <TouchableOpacity
+          onPress={() => router.push('/' as any)}
+          activeOpacity={0.9}
+          style={{
+            paddingHorizontal: 12,
+            height: 40,
+            borderRadius: 999,
+            backgroundColor: '#FFFFFF',
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ color: '#111827', fontWeight: '700', fontSize: 12 }}>Back to Home</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           onPress={onNext}
           activeOpacity={canGoNext() ? 0.9 : 1}
           style={{
+            flex: 1,
+            marginLeft: 12,
             height: 40,
             borderRadius: 999,
             backgroundColor: canGoNext() ? '#3366FF' : '#E5E7EB',
@@ -1480,107 +1504,6 @@ export default function CateringScreen() {
                 <Text style={{ fontSize: 12, color: '#6B7280', lineHeight: 18 }}>Selected items: None</Text>
               ) : null}
             </ScrollView>
-          </View>
-        </View>
-      ) : null}
-
-      {extraChargesOpen ? (
-        <View
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.4)',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <TouchableOpacity
-            activeOpacity={1}
-            onPress={() => {
-              setExtraChargesOpen(false);
-              setPendingExtraItem(null);
-            }}
-            style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0 }}
-          />
-          <View
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
-              paddingHorizontal: 16,
-              paddingTop: 14,
-              paddingBottom: 14 + insets.bottom,
-              borderTopWidth: 1,
-              borderTopColor: '#E5E7EB',
-            }}
-          >
-            <Text style={{ color: '#111827', fontWeight: '800', marginBottom: 10 }}>
-              Allowed items have been already selected
-            </Text>
-            <Text style={{ color: '#6B7280', marginBottom: 10 }}>
-              You can continue to add extra items or review your selection.
-            </Text>
-            <Text style={{ color: '#111827', lineHeight: 20 }}>
-              {state.mealType === 'breakfast'
-                ? `Extra items are charged per plate as below:\n• Main Breakfast: +₹25\n• Accompaniments: +₹10\n• Beverages: +₹15\n• Sweets / Fruits: +₹20`
-                : state.mealType === 'snacks'
-                  ? `Extra items (per plate):\n• Snack (Veg) – ₹30\n• Snack (Non-Veg) – ₹50\n• Chutney / Dip – ₹20\n• Beverage – ₹20`
-                  : `Extra items are charged per plate as below:\n• Starter: +₹25\n• Main Course: +₹30\n• Rice: +₹20\n• Biryani / Pulav: +₹40\n• Bread: +₹10\n• Dessert / Sweet: +₹15`}
-            </Text>
-
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', alignItems: 'center', marginTop: 14 }}>
-              <TouchableOpacity
-                onPress={() => {
-                  const item = pendingExtraItem;
-                  setExtraChargesOpen(false);
-                  setPendingExtraItem(null);
-                  if (!item) return;
-
-                  setSelectedItemsById((prev) => {
-                    const cur = prev[item.id];
-                    if (cur?.count && cur.count > 0) return prev;
-
-                    const next = { ...prev, [item.id]: { item, count: 1, accompaniments: cur?.accompaniments, addedAt: Date.now() } };
-                    const ckey = (item.course ?? '') as PlannerCategoryKey;
-                    const max = recommendedMaxByCategory[ckey];
-                    if (max != null) {
-                      const uniqueCount = Object.values(next).filter((x) => x.item.course === ckey && x.count > 0).length;
-                      if (uniqueCount > max) {
-                        setOverRecommendedCategory(ckey);
-                        setOverRecommendedOpen(true);
-                      }
-                    }
-                    return next;
-                  });
-                }}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 999,
-                  backgroundColor: '#3366FF',
-                  marginRight: 12,
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Continue</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setSummaryExpanded(true);
-                  setExtraChargesOpen(false);
-                  setPendingExtraItem(null);
-                }}
-                style={{
-                  paddingHorizontal: 14,
-                  paddingVertical: 8,
-                  borderRadius: 999,
-                  backgroundColor: '#3366FF',
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Review</Text>
-              </TouchableOpacity>
-            </View>
           </View>
         </View>
       ) : null}

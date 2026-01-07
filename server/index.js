@@ -103,6 +103,32 @@ async function ensureSnacksPlatterPackage() {
 
 void ensureSnacksPlatterPackage().catch(() => null);
 
+async function ensureBreakfastPlatterPackage() {
+  if (!prisma || !prisma.package) return;
+  try {
+    const title = 'Breakfast Platter';
+    const baseData = {
+      title,
+      cuisine: 'Breakfast',
+      minPax: 50,
+      basePrice: 0,
+      perPax: 14900,
+      isVeg: true,
+      images: [],
+      isActive: true,
+    };
+
+    const existing = await prisma.package.findFirst({ where: { title } });
+    if (existing) {
+      await prisma.package.update({ where: { id: existing.id }, data: baseData });
+      return;
+    }
+    await prisma.package.create({ data: baseData });
+  } catch (e) {
+    console.warn('Failed to ensure Breakfast Platter package:', String(e?.message ?? e));
+  }
+}
+
 const orderStore = new Map();
 
 const QUICK_CATALOG = {
@@ -1035,6 +1061,7 @@ app.get('/api/catalog/packages', async (_req, res) => {
     const db = requireDb(res);
     if (!db) return;
     await ensureSnacksPlatterPackage();
+    await ensureBreakfastPlatterPackage();
     const itemsRaw = await db.package.findMany({ where: { isActive: true }, orderBy: { createdAt: 'desc' } });
     const items = itemsRaw.map((p) => ({ ...p, mealType: inferPackageMealType(p) }));
     return res.json({ items });
@@ -1268,7 +1295,20 @@ app.post('/api/quotes/instant', async (req, res) => {
       pricing: usePerPlatePricing ? { mode: 'per_plate', perPlate: Number(pkg.perPax ?? pkg.basePrice) } : null,
       bulkDiscountPct: cateringBulkDiscountPct,
     });
-    const { subtotal, gst, total, breakdown, meta } = q;
+    let { subtotal, gst, total, breakdown, meta } = q;
+
+    if (selection && typeof selection === 'object' && String(selection?.kind ?? '') === 'party_box') {
+      const mapLabel = (label) => {
+        const s = String(label ?? '');
+        return s
+          .replace(/\bplates\b/gi, 'boxes')
+          .replace(/\bplate\b/gi, 'box')
+          .replace(/\s*\/\s*box/gi, '/box');
+      };
+      breakdown = Array.isArray(breakdown)
+        ? breakdown.map((x) => ({ ...x, label: mapLabel(x?.label) }))
+        : breakdown;
+    }
     const expiresAt = new Date(Date.now() + 45 * 60 * 1000);
 
     const breakdownJson =
@@ -1368,7 +1408,7 @@ app.post('/api/bookings', authMiddleware, async (req, res) => {
       return String(sel.kind ?? '').trim();
     })();
 
-    const pctRaw = selectionKind === 'catering' ? CATERING_ADVANCE_PERCENT : ADVANCE_PERCENT;
+    const pctRaw = selectionKind === 'party_box' ? 100 : selectionKind === 'catering' ? CATERING_ADVANCE_PERCENT : ADVANCE_PERCENT;
     const pct = Number.isFinite(pctRaw) ? Math.max(1, Math.min(100, Math.round(pctRaw))) : 30;
     const advanceAmount = Math.max(1, Math.round((quote.total * pct) / 100));
 

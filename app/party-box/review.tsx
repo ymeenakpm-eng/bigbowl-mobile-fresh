@@ -65,11 +65,6 @@ export default function PartyBoxReviewScreen() {
     return raw.split(',').filter(Boolean);
   }, [params.items]);
 
-  const selectedItemNames = useMemo(() => {
-    const byId = new Map(menu.map((x) => [x.id, x.name]));
-    return selectedItems.map((id) => byId.get(id) ?? id);
-  }, [menu, selectedItems]);
-
   const selectedItemMeta = useMemo(() => {
     const byId = new Map(menu.map((x) => [x.id, x]));
     return selectedItems.map((id) => {
@@ -143,11 +138,11 @@ export default function PartyBoxReviewScreen() {
             {String(params.time ?? '-')}
           </Text>
           <Text style={{ fontSize: 12, color: '#111827', fontWeight: '800', marginTop: 6 }}>
-            Price/plate (est.): ₹{Math.round(Number(tier?.perPlate ?? 0) / 100)}
+            Box Cost (est.): ₹{Math.round(Number(tier?.perPlate ?? 0) / 100)}
           </Text>
           {premiumPerPlate > 0 ? (
             <Text style={{ fontSize: 12, color: '#111827', fontWeight: '800', marginTop: 4 }}>
-              Premium add-ons: +₹{Math.round(premiumPerPlate / 100)}/plate
+              Premium add-ons: +₹{Math.round(premiumPerPlate / 100)}/box
             </Text>
           ) : null}
         </View>

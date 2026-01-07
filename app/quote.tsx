@@ -74,6 +74,11 @@ export default function QuoteScreen() {
     }
   }, [selectionRaw]);
 
+  const selectionKind = useMemo(() => {
+    if (!selection || typeof selection !== 'object') return '';
+    return String((selection as any)?.kind ?? '').trim();
+  }, [selection]);
+
   const [pkg, setPkg] = useState<PackageItem | null>(null);
   const [loadingPkg, setLoadingPkg] = useState(true);
   const [pax, setPax] = useState(initialPax || '80');
@@ -292,7 +297,11 @@ export default function QuoteScreen() {
         {quote ? (
           <View style={{ marginTop: 18, padding: 14, borderRadius: 12, backgroundColor: '#F7F7F7' }}>
             <Text style={{ fontWeight: '800', marginBottom: 8 }}>Quote</Text>
-            {perPlatePaise != null ? <Text style={{ color: '#333' }}>Price/plate: ₹{(perPlatePaise / 100).toFixed(0)}</Text> : null}
+            {perPlatePaise != null ? (
+              <Text style={{ color: '#333' }}>
+                {selectionKind === 'party_box' ? 'Box Cost' : 'Price/plate'}: ₹{(perPlatePaise / 100).toFixed(0)}
+              </Text>
+            ) : null}
             <Text style={{ color: '#333' }}>Subtotal: ₹{(quote.subtotal / 100).toFixed(0)}</Text>
             <Text style={{ color: '#333' }}>GST: ₹{(quote.gst / 100).toFixed(0)}</Text>
             <Text style={{ color: '#333', fontWeight: '800', marginTop: 6 }}>Total: ₹{(quote.total / 100).toFixed(0)}</Text>
@@ -321,7 +330,7 @@ export default function QuoteScreen() {
                 {loadingBooking ? (
                   <ActivityIndicator color="#FFFFFF" />
                 ) : (
-                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Confirm & Pay Advance</Text>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>{selectionKind === 'party_box' ? 'Confirm & Pay' : 'Confirm & Pay Advance'}</Text>
                 )}
               </TouchableOpacity>
               {!isLoggedIn ? (

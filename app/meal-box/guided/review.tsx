@@ -52,7 +52,7 @@ export default function MealBoxGuidedReviewScreen() {
 
   const selectionsByCategory = useMemo(() => {
     const sel = state?.selection;
-    if (!sel) return [] as Array<{ title: string; items: string[] }>;
+    if (!sel) return [] as { title: string; items: string[] }[];
 
     return MEAL_BOX_CATEGORIES.map((c) => {
       const ids = Array.isArray(sel[c.key]) ? sel[c.key] : [];

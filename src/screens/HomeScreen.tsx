@@ -9,7 +9,6 @@ import { useCart } from '../contexts/CartContext';
 import { useLocation } from '../contexts/LocationContext';
 import { getStoredItem } from '../utils/storage';
 
-const vijayawadaHero = require('../../assets/images/vijayawada-hero.jpg');
 const bulkBanner = require('../../assets/images/banners/bulk-banner.png');
 const occasionsBanner = require('../../assets/images/banners/occasions.jpg');
 const foodAnim1 = require('../../assets/images/animated/food-1.png');
@@ -19,7 +18,7 @@ const foodAnim4 = require('../../assets/images/animated/food-4.png');
 const bigBowlLogo = require('../../assets/images/animated/logo.png');
 
 const HomeScreen = () => {
-  const { getCartItemCount, getCartTotal, addToCart } = useCart();
+  const { getCartItemCount, getCartTotal } = useCart();
   const { state: locationState } = useLocation();
 
   const insets = useSafeAreaInsets();
@@ -89,7 +88,6 @@ const HomeScreen = () => {
   }, [deliveryIntent]);
 
   const router = useRouter();
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const scrollRef = useRef<ScrollView | null>(null);
 
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
@@ -366,8 +364,6 @@ const HomeScreen = () => {
           </View>
         </SafeAreaView>
 
-        <View style={{ height: 14 }} />
-
         {/* Hero banner - flat light yellow CraftMyPlate-style hero (true full width) */}
         <View
           style={{
@@ -379,10 +375,10 @@ const HomeScreen = () => {
           }}
         >
           <LinearGradient
-            colors={['#F6F4FB', '#FFFFFF']}
+            colors={['#F1ECFF', '#FFFFFF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 0, y: 1 }}
-            style={{ paddingTop: 20, paddingHorizontal: 16, paddingBottom: 24 }}
+            style={{ width: '100%', backgroundColor: '#F1ECFF', paddingTop: 20, paddingHorizontal: 16, paddingBottom: 24 }}
           >
             <View style={{ width: '100%' }}>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -443,7 +439,6 @@ const HomeScreen = () => {
                       elevation: 6,
                     }}
                   >
-                    {/* Icon + text layout; special case for Call card */}
                     <View
                       style={{
                         width: 40,
@@ -457,21 +452,16 @@ const HomeScreen = () => {
                     >
                       <Text style={{ fontSize: 20, color: box.label === 'Catering' || box.label === 'Party Box' ? '#FBBF24' : '#4B1F8A' }}>{box.emoji}</Text>
                     </View>
-                    <Text style={{ color: '#F9FAFB', fontWeight: '900', fontSize: 13, textAlign: 'center', width: '100%' }}>
-                      {box.label}
-                    </Text>
-                    <Text
-                      numberOfLines={1}
-                      style={{ color: '#E5E7EB', fontWeight: '700', fontSize: 11, textAlign: 'center', width: '100%', marginTop: 4 }}
-                    >
-                      {(box as any).desc}
+                    <Text style={{ color: '#F9FAFB', fontWeight: '900', fontSize: 13, textAlign: 'center', width: '100%' }}>{box.label}</Text>
+                    <Text numberOfLines={1} style={{ color: '#E5E7EB', fontWeight: '700', fontSize: 11, textAlign: 'center', width: '100%', marginTop: 4 }}>
+                      {box.desc}
                     </Text>
                     <View style={{ width: '100%', marginTop: 8 }}>
                       <Text numberOfLines={1} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', textAlign: 'center' }}>
-                        👥 {(box as any).guests}
+                        👥 {box.guests}
                       </Text>
                       <Text numberOfLines={3} style={{ fontSize: 11, color: '#E5E7EB', fontWeight: '700', marginTop: 4, textAlign: 'center' }}>
-                        📅 {(box as any).advance}
+                        📅 {box.advance}
                       </Text>
                     </View>
                   </TouchableOpacity>

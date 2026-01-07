@@ -25,11 +25,6 @@ export default function FoodDetail() {
     );
   }
 
-  const isBoxCategory =
-    item.category === 'Party Boxes' ||
-    item.category === 'Meal Boxes' ||
-    item.category === 'Snack Boxes';
-
   let servesLine: string | undefined;
   if (item.category === 'Party Boxes') {
     servesLine = 'Ideal for ~10–12 guests';

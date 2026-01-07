@@ -392,20 +392,9 @@ export default function CateringQuotePreviewScreen() {
     return Math.max(0, Math.round(pax * perPlatePaise));
   }, [deliveryFeePaise, foodCostFromLinesPaise, metaSubtotalBeforeDiscountPaise, pax, perPlatePaise]);
 
-  const displayPricePerPlatePaise = useMemo(() => {
-    if (pax > 0 && foodCostPaise > 0) return Math.max(0, Math.round(foodCostPaise / pax));
-    return perPlatePaise;
-  }, [foodCostPaise, pax, perPlatePaise]);
-
   const discountPct = useMemo(() => computeCateringBulkDiscountPct(pax), [pax]);
 
   const expectedDiscountPct = useMemo(() => computeCateringBulkDiscountPct(pax), [pax]);
-
-  const discountTierLabel = useMemo(() => {
-    const pct = discountPct > 0 ? discountPct : expectedDiscountPct;
-    if (pct === 15) return '200+ pax';
-    return '';
-  }, [discountPct, expectedDiscountPct]);
 
   const subtotalBeforeDiscountDerivedPaise = useMemo(() => {
     return Math.max(0, Math.round(foodCostPaise + deliveryFeePaise));
@@ -444,12 +433,6 @@ export default function CateringQuotePreviewScreen() {
   const totalPaise = useMemo(() => {
     return Math.max(0, Math.round(subtotalAfterDiscountPaise + gstPaise));
   }, [gstPaise, subtotalAfterDiscountPaise]);
-
-  const pricePerPlateFromTotalPaise = useMemo(() => {
-    if (!pax || pax <= 0) return 0;
-    const per = Math.round(totalPaise / pax);
-    return Number.isFinite(per) ? Math.max(0, per) : 0;
-  }, [pax, totalPaise]);
 
   const advancePaise = useMemo(() => Math.max(1, Math.round((totalPaise * ADVANCE_PCT) / 100)), [totalPaise]);
   const balancePaise = useMemo(() => Math.max(0, totalPaise - advancePaise), [advancePaise, totalPaise]);

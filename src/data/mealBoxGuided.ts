@@ -9,14 +9,14 @@ export type MealBoxItem = {
   category: MealBoxCategoryKey;
 };
 
-export const MEAL_BOX_TYPES: Array<{ key: MealBoxTypeKey; title: string; pricePerBoxRupees: number; isVeg: boolean }> = [
+export const MEAL_BOX_TYPES: { key: MealBoxTypeKey; title: string; pricePerBoxRupees: number; isVeg: boolean }[] = [
   { key: 'veg', title: 'Veg Meal Box', pricePerBoxRupees: 249, isVeg: true },
   { key: 'premium_veg', title: 'Premium Veg Meal Box', pricePerBoxRupees: 349, isVeg: true },
   { key: 'non_veg', title: 'Non-Veg Meal Box', pricePerBoxRupees: 299, isVeg: false },
   { key: 'premium_non_veg', title: 'Premium Non-Veg Meal Box', pricePerBoxRupees: 399, isVeg: false },
 ];
 
-export const MEAL_BOX_CATEGORIES: Array<{ key: MealBoxCategoryKey; title: string; limit: number }> = [
+export const MEAL_BOX_CATEGORIES: { key: MealBoxCategoryKey; title: string; limit: number }[] = [
   { key: 'starters', title: 'Starters', limit: 1 },
   { key: 'main_course', title: 'Main Course', limit: 2 },
   { key: 'rice_biryani', title: 'Rice / Biryani', limit: 1 },

@@ -300,6 +300,8 @@ export default function PaymentSuccessScreen() {
     return notes && typeof notes === 'object' ? String((notes as any)?.kind ?? '').trim() : '';
   })();
 
+  const hideAdvanceRows = selectionKind === 'party_box' || genericKind === 'party_box';
+
   const invoiceWhatsAppMessage = (() => {
     if (!booking && !orderDetails) return '';
     const lines: string[] = [];
@@ -382,8 +384,10 @@ export default function PaymentSuccessScreen() {
       bodyLines.push('');
       bodyLines.push('------------------------------------------------------');
       bodyLines.push(...withAmt('FINAL TOTAL', `₹${formatRupees(totalRupees)}`));
-      bodyLines.push(...withAmt('Advance Paid', `₹${formatRupees(advRupees)}`));
-      bodyLines.push(...withAmt('Balance Due', `₹${formatRupees(balRupees)}`));
+      if (!hideAdvanceRows) {
+        bodyLines.push(...withAmt('Advance Paid', `₹${formatRupees(advRupees)}`));
+        bodyLines.push(...withAmt('Balance Due', `₹${formatRupees(balRupees)}`));
+      }
 
       const maxBeforeAmt = bodyLines.reduce((acc, line) => {
         const idx = line.indexOf(AMT);
@@ -405,23 +409,30 @@ export default function PaymentSuccessScreen() {
       lines.push('```');
       lines.push(alignedBody);
       lines.push('```');
-    } else if (quote) {
+    }
+
+    if (!cateringInvoiceBreakdown && quote) {
       lines.push('');
       lines.push('Amount Summary');
       lines.push(`Subtotal: ₹${money(subtotalPaise)}`);
       lines.push(`GST: ₹${money(gstPaise)}`);
       lines.push(`Total: ₹${money(totalPaise)}`);
-      lines.push(`Advance paid: ₹${money(advancePaise)} (${String(booking.advancePct ?? '-') }%)`);
-      lines.push(`Balance due: ₹${balancePaise == null ? '-' : money(balancePaise)}`);
-    } else if (orderDetails) {
+      if (!hideAdvanceRows) {
+        lines.push(`Advance paid: ₹${money(advancePaise)} (${String(booking.advancePct ?? '-') }%)`);
+        lines.push(`Balance due: ₹${balancePaise == null ? '-' : money(balancePaise)}`);
+      }
+    }
+
+    if (!cateringInvoiceBreakdown && !quote && orderDetails) {
       lines.push('');
       lines.push('Amount Summary');
       lines.push(`Total: ₹${genericFullPaise == null ? money(genericAdvancePaise) : money(genericFullPaise)}`);
-      if (genericAdvancePct != null && genericAdvancePaise != null) {
+      if (!hideAdvanceRows && genericAdvancePct != null && genericAdvancePaise != null) {
         lines.push(`Advance paid: ₹${money(genericAdvancePaise)} (${String(genericAdvancePct)}%)`);
         lines.push(`Balance due: ₹${genericBalancePaise == null ? '-' : money(genericBalancePaise)}`);
       }
     }
+
     return lines.join('\n');
   })();
 
@@ -493,19 +504,19 @@ export default function PaymentSuccessScreen() {
       <div class="row"><span class="pre">GST (${Math.round(b.gstPct)}%)\n  = ${Math.round(b.gstPct)}% × ₹${formatLineMoney(b.subtotalAfterDiscountPaise)}</span><strong>₹${formatLineMoney(b.gstPaise)}</strong></div>
       <div class="divider"></div>
       <div class="row"><span><strong>FINAL TOTAL</strong></span><strong>₹${formatLineMoney(b.totalPaise)}</strong></div>
-      <div class="row"><span>Advance paid (${advancePctText}%)</span><strong>₹${formatLineMoney(b.advancePaise)}</strong></div>
-      <div class="row"><span>Balance due</span><strong>₹${formatLineMoney(b.balancePaise)}</strong></div>
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Advance paid (${advancePctText}%)</span><strong>₹${formatLineMoney(b.advancePaise)}</strong></div>`}
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Balance due</span><strong>₹${formatLineMoney(b.balancePaise)}</strong></div>`}
       ` : quote ? `
       <div class="row"><span>Subtotal</span><strong>₹${subtotalText}</strong></div>
       <div class="row"><span>GST</span><strong>₹${gstText}</strong></div>
       <div class="divider"></div>
       <div class="row"><span>Total</span><strong>₹${totalText}</strong></div>
-      <div class="row"><span>Advance paid (${advancePctText}%)</span><strong>₹${advanceText}</strong></div>
-      <div class="row"><span>Balance due</span><strong>₹${balanceText}</strong></div>
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Advance paid (${advancePctText}%)</span><strong>₹${advanceText}</strong></div>`}
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Balance due</span><strong>₹${balanceText}</strong></div>`}
       ` : `
       <div class="row"><span>Total</span><strong>₹${genericTotalText}</strong></div>
-      <div class="row"><span>Advance paid (${genericAdvancePctText}%)</span><strong>₹${genericAdvanceText}</strong></div>
-      <div class="row"><span>Balance due</span><strong>₹${genericBalanceText}</strong></div>
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Advance paid (${genericAdvancePctText}%)</span><strong>₹${genericAdvanceText}</strong></div>`}
+      ${hideAdvanceRows ? '' : `<div class="row"><span>Balance due</span><strong>₹${genericBalanceText}</strong></div>`}
       `}
     </div>
   </body>
@@ -594,11 +605,13 @@ export default function PaymentSuccessScreen() {
                 </Text>
 
                 <View style={{ marginTop: 10 }}>
-                  <Text style={{ color: '#555555' }}>
-                    Advance: ₹{money(advancePaise)} ({String(booking.advancePct ?? '-') }%)
-                    {'\n'}
-                    Balance due: ₹{balancePaise == null ? '-' : money(balancePaise)}
-                  </Text>
+                  {!hideAdvanceRows ? (
+                    <Text style={{ color: '#555555' }}>
+                      Advance: ₹{money(advancePaise)} ({String(booking.advancePct ?? '-') }%)
+                      {'\n'}
+                      Balance due: ₹{balancePaise == null ? '-' : money(balancePaise)}
+                    </Text>
+                  ) : null}
                 </View>
               </View>
             ) : null}
